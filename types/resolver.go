@@ -245,12 +245,19 @@ func (r *Resolver) resolveVariableDeclaration(stmt *ast.VariableDeclaration) {
 func (r *Resolver) resolveFunctionDeclaration(stmt *ast.FunctionDeclaration) {
 	// Resolve parameter types
 	var paramTypes []Type
-	for range stmt.Parameters {
-		paramTypes = append(paramTypes, UndefinedType) // Simplified for now
+	for _, param := range stmt.Parameters {
+		var paramType Type = UndefinedType
+		if param.TypeAnnotation != nil {
+			paramType = r.resolveTypeAnnotation(param.TypeAnnotation)
+		}
+		paramTypes = append(paramTypes, paramType)
 	}
 	
 	// Resolve return type
 	var returnType Type = VoidType
+	if stmt.ReturnType != nil {
+		returnType = r.resolveTypeAnnotation(stmt.ReturnType)
+	}
 	
 	// Define function in current scope
 	funcType := NewFunctionType(paramTypes, returnType)
@@ -259,9 +266,9 @@ func (r *Resolver) resolveFunctionDeclaration(stmt *ast.FunctionDeclaration) {
 	// Enter function scope
 	r.EnterScope()
 	
-	// Define parameters
-	for _, param := range stmt.Parameters {
-		r.Define(param.Name.Name, UndefinedType, ParameterSymbol, param.Name.NamePos)
+	// Define parameters with their resolved types
+	for i, param := range stmt.Parameters {
+		r.Define(param.Name.Name, paramTypes[i], ParameterSymbol, param.Name.NamePos)
 	}
 	
 	// Resolve function body
@@ -410,4 +417,55 @@ func (r *Resolver) GetErrors() []error {
 // GetGlobalScope returns the global scope
 func (r *Resolver) GetGlobalScope() *Scope {
 	return r.globalScope
+}
+
+// resolveTypeAnnotation resolves a type annotation to a Type
+func (r *Resolver) resolveTypeAnnotation(annotation ast.TypeNode) Type {
+	switch t := annotation.(type) {
+	case *ast.BasicType:
+		switch t.Kind {
+		case lexer.NUMBER_T:
+			return FloatType
+		case lexer.INT_T:
+			return IntType
+		case lexer.FLOAT_T:
+			return FloatType
+		case lexer.STRING_T:
+			return StringType
+		case lexer.BOOLEAN_T:
+			return BooleanType
+		case lexer.VOID:
+			return VoidType
+		case lexer.NULL:
+			return NullType
+		case lexer.UNDEFINED:
+			return UndefinedType
+		// Extended numeric types
+		case lexer.INT8_T:
+			return Int8Type
+		case lexer.INT16_T:
+			return Int16Type
+		case lexer.INT32_T:
+			return Int32Type
+		case lexer.INT64_T:
+			return Int64Type
+		case lexer.FLOAT32_T:
+			return Float32Type
+		case lexer.FLOAT64_T:
+			return Float64Type
+		default:
+			return UndefinedType
+		}
+	case *ast.ArrayType:
+		elementType := r.resolveTypeAnnotation(t.ElementType)
+		return NewArrayType(elementType)
+	case *ast.UnionType:
+		var types []Type
+		for _, typeNode := range t.Types {
+			types = append(types, r.resolveTypeAnnotation(typeNode))
+		}
+		return NewUnionType(types...)
+	default:
+		return UndefinedType
+	}
 }

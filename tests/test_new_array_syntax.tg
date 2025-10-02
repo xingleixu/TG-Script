@@ -1,0 +1,40 @@
+// 测试新的数组类型语法 elementType[]
+
+// 基本类型数组
+let intArray: int[] = [1, 2, 3];
+let stringArray: string[] = ["hello", "world"];
+let boolArray: boolean[] = [true, false];
+
+// 基本数字类型数组（避免类型推断问题）
+let basicIntArray: int[] = [1, 2, 3];
+let basicFloatArray: float[] = [1.5, 2.5, 3.5];
+
+// 嵌套数组（多维数组）
+let matrix: int[][] = [[1, 2], [3, 4], [5, 6]];
+let stringMatrix: string[][] = [["a", "b"], ["c", "d"]];
+
+// 函数参数和返回值
+function processIntArray(arr: int[]): int {
+    return arr[0];
+}
+
+function createStringArray(): string[] {
+    return ["created", "array"];
+}
+
+function processMatrix(matrix: int[][]): int {
+    return matrix[0][0];
+}
+
+// 测试函数调用
+let firstInt = processIntArray(intArray);
+let newStringArray = createStringArray();
+let matrixElement = processMatrix(matrix);
+
+// 数组元素访问
+let element1 = intArray[0];
+let element2 = stringArray[1];
+let nestedElement = matrix[1][0];
+
+// 返回测试结果
+firstInt + element1 + matrixElement;

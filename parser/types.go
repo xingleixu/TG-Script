@@ -60,30 +60,50 @@ func (p *Parser) parseIntersectionType() ast.TypeNode {
 
 // parsePrimaryType parses a primary type.
 func (p *Parser) parsePrimaryType() ast.TypeNode {
+	var baseType ast.TypeNode
+	
 	switch p.currentToken.Type {
 	case lexer.IDENT:
-		return p.parseTypeReference()
+		baseType = p.parseTypeReference()
 	case lexer.LPAREN:
-		return p.parseGroupedType()
+		baseType = p.parseGroupedType()
 	case lexer.LBRACE:
-		return p.parseObjectType()
+		baseType = p.parseObjectType()
 	case lexer.LBRACKET:
-		return p.parseArrayOrTupleType()
+		baseType = p.parseArrayOrTupleType()
 	case lexer.FUNCTION:
-		return p.parseFunctionType()
+		baseType = p.parseFunctionType()
 	case lexer.STRING_T, lexer.NUMBER_T, lexer.BOOLEAN_T, lexer.INT_T, lexer.FLOAT_T, lexer.VOID, lexer.NULL, lexer.UNDEFINED,
 		 lexer.INT8_T, lexer.INT16_T, lexer.INT32_T, lexer.INT64_T, lexer.FLOAT32_T, lexer.FLOAT64_T:
 		// Handle primitive type tokens
-		return p.parseTypeReference()
+		baseType = p.parseTypeReference()
 	default:
 		// Handle primitive types by literal for backward compatibility
 		switch p.currentToken.Literal {
 		case "string", "number", "boolean", "void", "any", "unknown", "never", "undefined", "null":
-			return p.parseTypeReference()
+			baseType = p.parseTypeReference()
+		default:
+			p.addErrorf("unexpected token in type: %s", p.currentToken.Literal)
+			return nil
 		}
-		p.addErrorf("unexpected token in type: %s", p.currentToken.Literal)
-		return nil
 	}
+	
+	// Check for array suffix: elementType[]
+	for p.peekTokenIs(lexer.LBRACKET) {
+		p.nextToken() // consume '['
+		if !p.expectPeek(lexer.RBRACKET) {
+			p.addError("expected ']' after '['")
+			return nil
+		}
+		// Create array type with the base type as element type
+		baseType = &ast.ArrayType{
+			LBracket:    p.currentToken.Position,
+			ElementType: baseType,
+			RBracket:    p.currentToken.Position,
+		}
+	}
+	
+	return baseType
 }
 
 // parseTypeReference parses a type reference (identifier or qualified name).

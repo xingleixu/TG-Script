@@ -1,0 +1,22 @@
+// 测试数组类型注解
+
+// 基本数组声明
+let numbers = [1, 2, 3];
+let strings = ["hello", "world"];
+
+// 带类型注解的变量声明（新语法）
+let typedNumbers: int[] = [1, 2, 3];
+let typedStrings: string[] = ["hello", "world"];
+
+// 测试基本数字类型数组
+let intArray: int[] = [1, 2, 3];
+let floatArray: float[] = [1.5, 2.5, 3.5];
+
+// 测试数组访问
+let firstNumber = typedNumbers[0];
+let firstString = typedStrings[0];
+let firstInt = intArray[0];
+let firstFloat = floatArray[0];
+
+// 返回结果
+firstNumber + 10;

@@ -1,0 +1,45 @@
+// 测试数组类型的全面功能
+
+// 基本数组声明
+let numbers = [1, 2, 3, 4, 5];
+let strings = ["hello", "world", "TG-Script"];
+let booleans = [true, false, true];
+
+// 空数组
+let emptyNumbers = [];
+
+// 数组元素访问
+let firstNumber = numbers[0];
+let lastString = strings[2];
+
+// 数组元素修改
+numbers[0] = 100;
+strings[1] = "modified";
+
+// 嵌套数组
+let matrix = [[1, 2, 3], [4, 5, 6], [7, 8, 9]];
+let element = matrix[1][2]; // 应该是 6
+
+// 使用扩展数字类型的数组
+let int8Array = [1, 2, 3];
+let float32Array = [1.5, 2.5, 3.5];
+
+// 数组长度（如果支持）
+// let length = numbers.length;
+
+// 函数参数中的数组（带类型注解）
+function processArray(arr: int[]) {
+    return arr[0];
+}
+
+let result = processArray(numbers);
+
+// 返回数组的函数
+function createArray(): int[] {
+    return [10, 20, 30];
+}
+
+let newArray = createArray();
+
+// 测试表达式
+firstNumber + numbers[1] + numbers[2];

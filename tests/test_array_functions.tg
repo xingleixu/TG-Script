@@ -1,0 +1,10 @@
+// 测试数组函数参数
+
+let numbers: int[] = [1, 2, 3];
+
+function getFirst(arr: int[]): int {
+    return arr[0];
+}
+
+let result = getFirst(numbers);
+result + 5;
