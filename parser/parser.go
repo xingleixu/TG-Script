@@ -37,6 +37,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(lexer.BOOLEAN, p.parseBooleanLiteralExpression)
 	p.registerPrefix(lexer.NULL, p.parseNullLiteralExpression)
 	p.registerPrefix(lexer.UNDEFINED, p.parseUndefinedLiteralExpression)
+	p.registerPrefix(lexer.VOID, p.parseVoidLiteralExpression)
 	p.registerPrefix(lexer.LOGICAL_NOT, p.parsePrefixExpression)
 	p.registerPrefix(lexer.SUB, p.parsePrefixExpression)
 	p.registerPrefix(lexer.ADD, p.parsePrefixExpression)
@@ -445,6 +446,13 @@ func (p *Parser) parseNullLiteral() *ast.NullLiteral {
 // parseUndefinedLiteral parses an undefined literal.
 func (p *Parser) parseUndefinedLiteral() *ast.UndefinedLiteral {
 	return &ast.UndefinedLiteral{
+		ValuePos: p.currentToken.Position,
+	}
+}
+
+// parseVoidLiteral parses a void literal.
+func (p *Parser) parseVoidLiteral() *ast.VoidLiteral {
+	return &ast.VoidLiteral{
 		ValuePos: p.currentToken.Position,
 	}
 }

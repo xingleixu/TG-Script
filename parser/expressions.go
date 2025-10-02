@@ -96,6 +96,11 @@ func (p *Parser) parseUndefinedLiteralExpression() ast.Expression {
 	return p.parseUndefinedLiteral()
 }
 
+// parseVoidLiteralExpression parses a void literal expression.
+func (p *Parser) parseVoidLiteralExpression() ast.Expression {
+	return p.parseVoidLiteral()
+}
+
 // parsePrefixExpression parses a prefix expression (unary operators).
 func (p *Parser) parsePrefixExpression() ast.Expression {
 	expression := &ast.UnaryExpression{

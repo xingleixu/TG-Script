@@ -365,6 +365,14 @@ func (c *Compiler) compileExpression(expr ast.Expression, targetReg int) error {
 		return c.compileStringLiteral(e, targetReg)
 	case *ast.BooleanLiteral:
 		return c.compileBooleanLiteral(e, targetReg)
+	case *ast.NullLiteral:
+		return c.compileNullLiteral(e, targetReg)
+	case *ast.UndefinedLiteral:
+		return c.compileUndefinedLiteral(e, targetReg)
+	case *ast.VoidLiteral:
+		return c.compileVoidLiteral(e, targetReg)
+	case *ast.ArrayLiteral:
+		return c.compileArrayLiteral(e, targetReg)
 	case *ast.BinaryExpression:
 		return c.compileBinaryExpression(e, targetReg)
 	case *ast.UnaryExpression:
@@ -373,6 +381,8 @@ func (c *Compiler) compileExpression(expr ast.Expression, targetReg int) error {
 		return c.compileCallExpression(e, targetReg)
 	case *ast.AssignmentExpression:
 		return c.compileAssignmentExpression(e, targetReg)
+	case *ast.MemberExpression:
+		return c.compileMemberExpression(e, targetReg)
 	default:
 		return fmt.Errorf("unsupported expression type: %T", expr)
 	}
@@ -420,6 +430,59 @@ func (c *Compiler) compileBooleanLiteral(expr *ast.BooleanLiteral, targetReg int
 	} else {
 		c.Emit(vm.OpLoadBool, targetReg, 0, 0)
 	}
+	return nil
+}
+
+// compileNullLiteral compiles a null literal
+func (c *Compiler) compileNullLiteral(expr *ast.NullLiteral, targetReg int) error {
+	constIndex := c.AddConstant(vm.NullValue)
+	c.Emit(vm.OpLoadK, targetReg, constIndex)
+	return nil
+}
+
+// compileUndefinedLiteral compiles an undefined literal
+func (c *Compiler) compileUndefinedLiteral(expr *ast.UndefinedLiteral, targetReg int) error {
+	constIndex := c.AddConstant(vm.NilValue)
+	c.Emit(vm.OpLoadK, targetReg, constIndex)
+	return nil
+}
+
+// compileVoidLiteral compiles a void literal
+func (c *Compiler) compileVoidLiteral(expr *ast.VoidLiteral, targetReg int) error {
+	constIndex := c.AddConstant(vm.VoidValue)
+	c.Emit(vm.OpLoadK, targetReg, constIndex)
+	return nil
+}
+
+// compileArrayLiteral compiles an array literal
+func (c *Compiler) compileArrayLiteral(expr *ast.ArrayLiteral, targetReg int) error {
+	// Create new array with capacity equal to number of elements
+	c.Emit(vm.OpNewArray, targetReg, len(expr.Elements))
+	
+	// Compile and set each element
+	for i, element := range expr.Elements {
+		if element != nil {
+			// Compile element value
+			valueReg := c.AllocateRegister()
+			if err := c.compileExpression(element, valueReg); err != nil {
+				return err
+			}
+			
+			// Create index value
+			indexReg := c.AllocateRegister()
+			constIndex := c.AddConstant(vm.NewIntValue(int64(i)))
+			c.Emit(vm.OpLoadK, indexReg, constIndex)
+			
+			// Set array element: array[index] = value
+			c.Emit(vm.OpSetTable, targetReg, indexReg, valueReg)
+			
+			c.FreeRegister(valueReg)
+			c.FreeRegister(indexReg)
+		}
+		// For nil elements (holes in sparse arrays), we don't need to do anything
+		// as the array will have nil values by default
+	}
+	
 	return nil
 }
 
@@ -551,23 +614,46 @@ func (c *Compiler) compileAssignmentExpression(expr *ast.AssignmentExpression, t
 	}
 	
 	// Handle left-hand side assignment
-	if id, ok := expr.Left.(*ast.Identifier); ok {
+	switch left := expr.Left.(type) {
+	case *ast.Identifier:
 		// Simple variable assignment
-		symbol, exists := c.symbolTable.Resolve(id.Name)
+		symbol, exists := c.symbolTable.Resolve(left.Name)
 		if exists && symbol.Type == SymbolLocal {
 			// Local variable assignment
 			c.Emit(vm.OpMove, symbol.Register, valueReg)
 			c.Emit(vm.OpMove, targetReg, symbol.Register)
 		} else {
 			// Global variable assignment
-			constIndex := c.AddConstant(vm.NewStringValue(id.Name))
+			constIndex := c.AddConstant(vm.NewStringValue(left.Name))
 			c.Emit(vm.OpSetGlobal, valueReg, constIndex)
 			c.Emit(vm.OpMove, targetReg, valueReg)
 		}
 		return nil
+		
+	case *ast.MemberExpression:
+		// Member expression assignment (obj[prop] = value)
+		objReg := c.AllocateRegister()
+		defer c.FreeRegister(objReg)
+		
+		if err := c.compileExpression(left.Object, objReg); err != nil {
+			return err
+		}
+		
+		propReg := c.AllocateRegister()
+		defer c.FreeRegister(propReg)
+		
+		if err := c.compileExpression(left.Property, propReg); err != nil {
+			return err
+		}
+		
+		// Emit OpSetTable instruction to set the value
+		c.Emit(vm.OpSetTable, objReg, propReg, valueReg)
+		c.Emit(vm.OpMove, targetReg, valueReg)
+		return nil
+		
+	default:
+		return fmt.Errorf("unsupported assignment target: %T", expr.Left)
 	}
-	
-	return fmt.Errorf("unsupported assignment target: %T", expr.Left)
 }
 
 // compileForStatement compiles a for statement
@@ -655,6 +741,28 @@ func (c *Compiler) compileWhileStatement(stmt *ast.WhileStatement) error {
 	
 	// Patch jump to end
 	c.PatchJump(jumpToEnd, len(c.instructions))
+	
+	return nil
+}
+
+// compileMemberExpression compiles a member expression (obj[prop] or obj.prop)
+func (c *Compiler) compileMemberExpression(expr *ast.MemberExpression, targetReg int) error {
+	// Compile the object
+	objReg := c.AllocateRegister()
+	if err := c.compileExpression(expr.Object, objReg); err != nil {
+		return err
+	}
+	defer c.FreeRegister(objReg)
+
+	// Compile the property/index
+	propReg := c.AllocateRegister()
+	if err := c.compileExpression(expr.Property, propReg); err != nil {
+		return err
+	}
+	defer c.FreeRegister(propReg)
+
+	// Emit OpGetTable instruction to get the value
+	c.Emit(vm.OpGetTable, targetReg, objReg, propReg)
 	
 	return nil
 }

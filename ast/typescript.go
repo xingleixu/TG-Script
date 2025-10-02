@@ -10,6 +10,24 @@ import (
 // TYPESCRIPT TYPE NODES
 // ============================================================================
 
+// BasicType represents basic TypeScript types (void, null, string, number, boolean, etc.)
+type BasicType struct {
+	TypePos lexer.Position // position of type keyword
+	Kind    lexer.Token    // type kind (VOID, NULL, STRING_T, NUMBER_T, BOOLEAN_T, etc.)
+}
+
+func (bt *BasicType) Pos() lexer.Position { return bt.TypePos }
+func (bt *BasicType) End() lexer.Position {
+	length := len(bt.Kind.String())
+	return lexer.Position{
+		Line:   bt.TypePos.Line,
+		Column: bt.TypePos.Column + length,
+		Offset: bt.TypePos.Offset + length,
+	}
+}
+func (bt *BasicType) String() string { return bt.Kind.String() }
+func (bt *BasicType) typeNode()      {}
+
 // TypeReference represents a type reference (e.g., string, number, MyClass).
 type TypeReference struct {
 	TypePos   lexer.Position // position of type name

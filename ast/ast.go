@@ -169,6 +169,22 @@ func (ul *UndefinedLiteral) End() lexer.Position { return lexer.Position{
 func (ul *UndefinedLiteral) String() string { return "undefined" }
 func (ul *UndefinedLiteral) expressionNode() {}
 
+// VoidLiteral represents a void literal.
+type VoidLiteral struct {
+	ValuePos lexer.Position // position of the literal
+}
+
+func (vl *VoidLiteral) Pos() lexer.Position { return vl.ValuePos }
+func (vl *VoidLiteral) End() lexer.Position {
+	return lexer.Position{
+		Line:   vl.ValuePos.Line,
+		Column: vl.ValuePos.Column + 4, // length of "void"
+		Offset: vl.ValuePos.Offset + 4,
+	}
+}
+func (vl *VoidLiteral) String() string { return "void" }
+func (vl *VoidLiteral) expressionNode() {}
+
 // ============================================================================
 // EXPRESSIONS
 // ============================================================================

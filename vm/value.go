@@ -11,6 +11,8 @@ type ValueType int
 
 const (
 	TypeNil ValueType = iota
+	TypeVoid
+	TypeNull
 	TypeBool
 	TypeInt
 	TypeFloat
@@ -31,6 +33,8 @@ type Value struct {
 // Common value constants
 var (
 	NilValue   = Value{Type: TypeNil, Data: nil}
+	VoidValue  = Value{Type: TypeVoid, Data: nil}
+	NullValue  = Value{Type: TypeNull, Data: nil}
 	TrueValue  = Value{Type: TypeBool, Data: true}
 	FalseValue = Value{Type: TypeBool, Data: false}
 )
@@ -83,6 +87,16 @@ func (v Value) IsNil() bool {
 	return v.Type == TypeNil
 }
 
+// IsVoid returns true if the value is void
+func (v Value) IsVoid() bool {
+	return v.Type == TypeVoid
+}
+
+// IsNull returns true if the value is null
+func (v Value) IsNull() bool {
+	return v.Type == TypeNull
+}
+
 // IsBool returns true if the value is a boolean
 func (v Value) IsBool() bool {
 	return v.Type == TypeBool
@@ -131,7 +145,7 @@ func (v Value) IsCallable() bool {
 // ToBool converts the value to a boolean
 func (v Value) ToBool() bool {
 	switch v.Type {
-	case TypeNil:
+	case TypeNil, TypeVoid, TypeNull:
 		return false
 	case TypeBool:
 		return v.Data.(bool)
@@ -196,6 +210,10 @@ func (v Value) ToString() string {
 	switch v.Type {
 	case TypeNil:
 		return "nil"
+	case TypeVoid:
+		return "void"
+	case TypeNull:
+		return "null"
 	case TypeBool:
 		if v.Data.(bool) {
 			return "true"
@@ -241,6 +259,10 @@ func (v Value) TypeName() string {
 	switch v.Type {
 	case TypeNil:
 		return "nil"
+	case TypeVoid:
+		return "void"
+	case TypeNull:
+		return "null"
 	case TypeBool:
 		return "boolean"
 	case TypeInt:
@@ -271,7 +293,7 @@ func (v Value) Equals(other Value) bool {
 	}
 
 	switch v.Type {
-	case TypeNil:
+	case TypeNil, TypeVoid, TypeNull:
 		return true
 	case TypeBool:
 		return v.Data.(bool) == other.Data.(bool)

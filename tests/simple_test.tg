@@ -1,0 +1,11 @@
+// Simple type checker test
+
+let x = 42;
+let y = 3.14;
+let name = "Hello";
+
+function add(a, b) {
+    return a + b;
+}
+
+let result = add(10, 20);

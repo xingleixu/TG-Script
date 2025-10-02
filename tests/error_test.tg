@@ -1,0 +1,3 @@
+let x = 42;
+let name = "Hello";
+let result = x + name;
