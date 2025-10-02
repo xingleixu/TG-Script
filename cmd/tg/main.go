@@ -9,6 +9,7 @@ import (
 	"github.com/xingleixu/TG-Script/compiler"
 	"github.com/xingleixu/TG-Script/lexer"
 	"github.com/xingleixu/TG-Script/parser"
+	"github.com/xingleixu/TG-Script/types"
 	"github.com/xingleixu/TG-Script/vm"
 )
 
@@ -144,6 +145,39 @@ func executeScript(source, filename string) error {
 	return nil
 }
 
+func checkScript(source, filename string) error {
+	// Lexical analysis
+	l := lexer.New(source)
+	
+	// Parse
+	p := parser.New(l)
+	program := p.ParseProgram()
+	
+	// Check for parser errors
+	if errors := p.Errors(); len(errors) > 0 {
+		fmt.Printf("Parser errors in %s:\n", filename)
+		for _, err := range errors {
+			fmt.Printf("  %s\n", err)
+		}
+		return fmt.Errorf("parsing failed")
+	}
+	
+	// Type checking
+	checker := types.NewTypeChecker()
+	typeErrors := checker.Check(program)
+	
+	// Check for type errors
+	if len(typeErrors) > 0 {
+		fmt.Printf("Type errors in %s:\n", filename)
+		for _, err := range typeErrors {
+			fmt.Printf("  %s\n", err.Error())
+		}
+		return fmt.Errorf("type checking failed")
+	}
+	
+	return nil
+}
+
 func handleCompile(args []string) {
 	if len(args) == 0 {
 		fmt.Println("Error: Please specify a .tg file to compile")
@@ -197,9 +231,33 @@ func handleCheck(args []string) {
 	}
 	
 	filename := args[0]
-	fmt.Printf("Checking TG-Script file: %s\n", filename)
-	// TODO: Implement syntax and type checking logic
-	fmt.Println("Note: Check functionality not yet implemented")
+	
+	// Check file extension
+	if !strings.HasSuffix(filename, ".tg") {
+		fmt.Printf("Error: File must have .tg extension, got: %s\n", filename)
+		os.Exit(1)
+	}
+	
+	// Check if file exists
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		fmt.Printf("Error: File not found: %s\n", filename)
+		os.Exit(1)
+	}
+	
+	// Read source code
+	source, err := ioutil.ReadFile(filename)
+	if err != nil {
+		fmt.Printf("Error reading file %s: %v\n", filename, err)
+		os.Exit(1)
+	}
+	
+	// Perform syntax and type checking
+	if err := checkScript(string(source), filename); err != nil {
+		fmt.Printf("Check failed: %v\n", err)
+		os.Exit(1)
+	}
+	
+	fmt.Printf("✓ Check passed for %s\n", filename)
 }
 
 func handleMigrate(args []string) {

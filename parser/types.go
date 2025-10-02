@@ -71,8 +71,11 @@ func (p *Parser) parsePrimaryType() ast.TypeNode {
 		return p.parseArrayOrTupleType()
 	case lexer.FUNCTION:
 		return p.parseFunctionType()
+	case lexer.STRING_T, lexer.NUMBER_T, lexer.BOOLEAN_T, lexer.VOID, lexer.NULL, lexer.UNDEFINED:
+		// Handle primitive type tokens
+		return p.parseTypeReference()
 	default:
-		// Handle primitive types
+		// Handle primitive types by literal for backward compatibility
 		switch p.currentToken.Literal {
 		case "string", "number", "boolean", "void", "any", "unknown", "never", "undefined", "null":
 			return p.parseTypeReference()
@@ -83,18 +86,33 @@ func (p *Parser) parsePrimaryType() ast.TypeNode {
 }
 
 // parseTypeReference parses a type reference (identifier or qualified name).
-func (p *Parser) parseTypeReference() *ast.TypeReference {
-	ref := &ast.TypeReference{
-		Name: p.parseIdentifier(),
-	}
+func (p *Parser) parseTypeReference() ast.TypeNode {
+	// Handle basic type keywords
+	switch p.currentToken.Type {
+	case lexer.STRING_T, lexer.NUMBER_T, lexer.BOOLEAN_T, lexer.VOID, lexer.NULL, lexer.UNDEFINED, lexer.ANY, lexer.UNKNOWN, lexer.NEVER:
+		// Create BasicType for built-in types
+		return &ast.BasicType{
+			TypePos: p.currentToken.Position,
+			Kind:    p.currentToken.Type,
+		}
+	case lexer.IDENT:
+		// Create TypeReference for user-defined types
+		name := p.parseIdentifier()
+		ref := &ast.TypeReference{
+			Name: name,
+		}
 
-	// Optional generic type arguments
-	if p.peekTokenIs(lexer.LT) {
-		p.nextToken()
-		ref.TypeArgs = p.parseTypeArgumentList()
-	}
+		// Optional generic type arguments
+		if p.peekTokenIs(lexer.LT) {
+			p.nextToken()
+			ref.TypeArgs = p.parseTypeArgumentList()
+		}
 
-	return ref
+		return ref
+	default:
+		p.addErrorf("expected type name, got %s", p.currentToken.Literal)
+		return nil
+	}
 }
 
 // parseGroupedType parses a grouped type (parenthesized type).
@@ -286,7 +304,7 @@ func (p *Parser) isTypeKeyword() bool {
 
 // Helper function to check if we're at the start of a type annotation
 func (p *Parser) isAtTypeAnnotation() bool {
-	return p.currentTokenIs(lexer.IDENT) || p.currentTokenIs(lexer.LBRACE) || 
-		   p.currentTokenIs(lexer.LBRACKET) || p.currentTokenIs(lexer.LPAREN) ||
-		   p.isTypeKeyword()
+	return p.currentTokenIs(lexer.IDENT) || p.currentTokenIs(lexer.LBRACE) ||
+		p.currentTokenIs(lexer.LBRACKET) || p.currentTokenIs(lexer.LPAREN) ||
+		p.isTypeKeyword()
 }

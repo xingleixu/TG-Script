@@ -88,8 +88,9 @@ func (es *ExpressionStatement) statementNode() {}
 
 // VariableDeclarator represents a single variable declarator.
 type VariableDeclarator struct {
-	Id   BindingTarget // variable name/pattern
-	Init Expression    // initializer (optional)
+	Id             BindingTarget // variable name/pattern
+	TypeAnnotation TypeNode      // type annotation (optional)
+	Init           Expression    // initializer (optional)
 }
 
 func (vd *VariableDeclarator) Pos() lexer.Position { return vd.Id.Pos() }
@@ -100,10 +101,14 @@ func (vd *VariableDeclarator) End() lexer.Position {
 	return vd.Id.End()
 }
 func (vd *VariableDeclarator) String() string {
-	if vd.Init != nil {
-		return vd.Id.String() + " = " + vd.Init.String()
+	result := vd.Id.String()
+	if vd.TypeAnnotation != nil {
+		result += ": " + vd.TypeAnnotation.String()
 	}
-	return vd.Id.String()
+	if vd.Init != nil {
+		result += " = " + vd.Init.String()
+	}
+	return result
 }
 
 // VariableDeclaration represents a variable declaration.

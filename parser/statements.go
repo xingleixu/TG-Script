@@ -103,6 +103,13 @@ func (p *Parser) parseVariableDeclarator() *ast.VariableDeclarator {
 		Id: p.parseIdentifier(),
 	}
 
+	// Optional type annotation
+	if p.peekTokenIs(lexer.COLON) {
+		p.nextToken() // consume ':'
+		p.nextToken() // move to type
+		declarator.TypeAnnotation = p.parseTypeAnnotation()
+	}
+
 	// Optional initializer
 	if p.peekTokenIs(lexer.ASSIGN) {
 		p.nextToken()
@@ -227,13 +234,13 @@ func (p *Parser) parseForStatement() ast.Statement {
 			body := p.parseBlockStatement()
 
 			return &ast.ForInStatement{
-				ForPos:  forPos,
-				LParen:  lParen,
-				Left:    id,
-				InPos:   inPos,
-				Right:   right,
-				RParen:  rParen,
-				Body:    body,
+				ForPos: forPos,
+				LParen: lParen,
+				Left:   id,
+				InPos:  inPos,
+				Right:  right,
+				RParen: rParen,
+				Body:   body,
 			}
 		} else if p.peekTokenIs(lexer.IDENT) && p.peekToken.Literal == "of" {
 			// for-of loop (treat "of" as identifier for now)
@@ -255,13 +262,13 @@ func (p *Parser) parseForStatement() ast.Statement {
 			body := p.parseBlockStatement()
 
 			return &ast.ForOfStatement{
-				ForPos:  forPos,
-				LParen:  lParen,
-				Left:    id,
-				OfPos:   ofPos,
-				Right:   right,
-				RParen:  rParen,
-				Body:    body,
+				ForPos: forPos,
+				LParen: lParen,
+				Left:   id,
+				OfPos:  ofPos,
+				Right:  right,
+				RParen: rParen,
+				Body:   body,
 			}
 		} else {
 			// Regular for loop with declaration
@@ -316,13 +323,13 @@ func (p *Parser) parseForStatement() ast.Statement {
 	body := p.parseBlockStatement()
 
 	return &ast.ForStatement{
-		ForPos:  forPos,
-		LParen:  lParen,
-		Init:    init,
-		Test:    test,
-		Update:  update,
-		RParen:  rParen,
-		Body:    body,
+		ForPos: forPos,
+		LParen: lParen,
+		Init:   init,
+		Test:   test,
+		Update: update,
+		RParen: rParen,
+		Body:   body,
 	}
 }
 

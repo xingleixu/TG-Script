@@ -106,13 +106,51 @@ func (tc *TypeChecker) checkStatement(stmt ast.Statement) {
 // checkVariableDeclaration type checks a variable declaration
 func (tc *TypeChecker) checkVariableDeclaration(decl *ast.VariableDeclaration) {
 	for _, declarator := range decl.Declarations {
+		var declaredType Type = UndefinedType
+		
+		// Check if there's a type annotation
+		if declarator.TypeAnnotation != nil {
+			declaredType = tc.resolveTypeAnnotation(declarator.TypeAnnotation)
+		}
+		
+		// Check initializer if present
 		if declarator.Init != nil {
-			// Type check the initializer expression
 			initType := tc.checkExpression(declarator.Init)
 			
-			// TODO: Handle type annotations when they're added to VariableDeclarator
-			// For now, we just infer the type from the initializer
-			_ = initType
+			// If we have both type annotation and initializer, check compatibility
+			if declarator.TypeAnnotation != nil {
+				if !tc.isAssignable(initType, declaredType) {
+					tc.addDetailedError(
+						declarator.Init.Pos(),
+						fmt.Sprintf("Cannot assign value of type '%s' to variable of type '%s'", 
+							initType.String(), declaredType.String()),
+						TypeMismatchError,
+						fmt.Sprintf("Change the initializer to match type '%s' or remove the type annotation to allow type inference", 
+							declaredType.String()),
+						fmt.Sprintf("Variable '%s' is declared with type '%s' but initialized with incompatible type '%s'", 
+							declarator.Id.String(), declaredType.String(), initType.String()),
+					)
+				}
+			} else {
+				// No type annotation, infer type from initializer
+				declaredType = initType
+			}
+		} else if declarator.TypeAnnotation == nil {
+			// No type annotation and no initializer - this should be an error in strict mode
+			if tc.strictMode {
+				tc.addDetailedError(
+					declarator.Id.Pos(),
+					"Variable declaration must have either a type annotation or an initializer",
+					TypeMismatchError,
+					"Add a type annotation (e.g., ': string') or provide an initializer (e.g., '= \"value\"')",
+					fmt.Sprintf("Variable '%s' has no type information", declarator.Id.String()),
+				)
+			}
+		}
+		
+		// Add variable to symbol table
+		if id, ok := declarator.Id.(*ast.Identifier); ok {
+			tc.resolver.Define(id.Name, declaredType, VariableSymbol, id.Pos())
 		}
 	}
 }

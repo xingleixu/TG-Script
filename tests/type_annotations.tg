@@ -1,0 +1,26 @@
+// Test file for type annotations
+
+// Valid type annotations
+let name: string = "John";
+let age: number = 25;
+let isActive: boolean = true;
+
+// Type annotation without initializer
+let count: number;
+let message: string;
+
+// Type inference (no annotation)
+let inferredString = "Hello";
+let inferredNumber = 42;
+
+// Type mismatch errors
+let wrongType: string = 123;
+let anotherWrong: number = "text";
+let booleanWrong: boolean = 42;
+
+// Array type annotations
+let numbers: number[] = [1, 2, 3];
+let strings: string[] = ["a", "b", "c"];
+
+// Mixed type errors in arrays
+let mixedError: number[] = [1, "two", 3];
