@@ -147,12 +147,16 @@ func (a *ArrayType) IsAssignableTo(other Type) bool {
 type FunctionType struct {
 	Parameters []Type
 	ReturnType Type
+	Variadic   bool // true if the function accepts variable number of arguments
 }
 
 func (f *FunctionType) String() string {
 	var params []string
 	for _, param := range f.Parameters {
 		params = append(params, param.String())
+	}
+	if f.Variadic {
+		params = append(params, "...")
 	}
 	return fmt.Sprintf("(%s) => %s", strings.Join(params, ", "), f.ReturnType.String())
 }
@@ -195,10 +199,59 @@ func (f *FunctionType) IsAssignableTo(other Type) bool {
 }
 
 // ============================================================================
-// UNION TYPE
+// OBJECT TYPES
 // ============================================================================
 
-// UnionType represents union types (T | U)
+// ObjectType represents an object with properties
+type ObjectType struct {
+	Properties map[string]Type
+}
+
+func (o *ObjectType) String() string {
+	if len(o.Properties) == 0 {
+		return "object"
+	}
+	
+	var props []string
+	for name, typ := range o.Properties {
+		props = append(props, fmt.Sprintf("%s: %s", name, typ.String()))
+	}
+	return fmt.Sprintf("{ %s }", strings.Join(props, ", "))
+}
+
+func (o *ObjectType) Equals(other Type) bool {
+	if otherObj, ok := other.(*ObjectType); ok {
+		if len(o.Properties) != len(otherObj.Properties) {
+			return false
+		}
+		for name, typ := range o.Properties {
+			if otherType, exists := otherObj.Properties[name]; !exists || !typ.Equals(otherType) {
+				return false
+			}
+		}
+		return true
+	}
+	return false
+}
+
+func (o *ObjectType) IsAssignableTo(other Type) bool {
+	if otherObj, ok := other.(*ObjectType); ok {
+		// Structural typing: this object is assignable to other if it has all required properties
+		for name, expectedType := range otherObj.Properties {
+			if actualType, exists := o.Properties[name]; !exists || !actualType.IsAssignableTo(expectedType) {
+				return false
+			}
+		}
+		return true
+	}
+	return false
+}
+
+// ============================================================================
+// UNION TYPES
+// ============================================================================
+
+// UnionType represents a union of multiple types (T | U)
 type UnionType struct {
 	Types []Type
 }
@@ -277,7 +330,12 @@ func NewArrayType(elementType Type) *ArrayType {
 
 // NewFunctionType creates a new function type
 func NewFunctionType(parameters []Type, returnType Type) *FunctionType {
-	return &FunctionType{Parameters: parameters, ReturnType: returnType}
+	return &FunctionType{Parameters: parameters, ReturnType: returnType, Variadic: false}
+}
+
+// NewVariadicFunctionType creates a new variadic function type
+func NewVariadicFunctionType(parameters []Type, returnType Type) *FunctionType {
+	return &FunctionType{Parameters: parameters, ReturnType: returnType, Variadic: true}
 }
 
 // NewUnionType creates a new union type

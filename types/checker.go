@@ -33,7 +33,7 @@ func NewTypeChecker() *TypeChecker {
 	return &TypeChecker{
 		resolver:   resolver,
 		inferrer:   inferrer,
-		strictMode: false, // Can be configured
+		strictMode: true, // Enable strict mode by default for better error detection
 	}
 }
 
@@ -78,7 +78,8 @@ func (tc *TypeChecker) checkStatement(stmt ast.Statement) {
 func (tc *TypeChecker) checkVariableDeclaration(decl *ast.VariableDeclaration) {
 	for _, declarator := range decl.Declarations {
 		if declarator.Init != nil {
-			initType := tc.inferrer.InferType(declarator.Init)
+			// Type check the initializer expression
+			initType := tc.checkExpression(declarator.Init)
 			
 			// TODO: Handle type annotations when they're added to VariableDeclarator
 			// For now, we just infer the type from the initializer
@@ -125,6 +126,8 @@ func (tc *TypeChecker) checkExpression(expr ast.Expression) Type {
 		return tc.checkAssignmentExpression(e)
 	case *ast.ArrayLiteral:
 		return tc.checkArrayLiteral(e)
+	case *ast.Identifier:
+		return tc.checkIdentifier(e)
 	default:
 		return tc.inferrer.InferType(expr)
 	}
@@ -224,23 +227,38 @@ func (tc *TypeChecker) checkCallExpression(expr *ast.CallExpression) Type {
 	calleeType := tc.checkExpression(expr.Callee)
 	
 	if funcType, ok := calleeType.(*FunctionType); ok {
-		// Check argument count
-		if len(expr.Arguments) != len(funcType.Parameters) {
-			tc.addError(expr.Pos(),
-				fmt.Sprintf("Expected %d arguments, got %d",
-					len(funcType.Parameters), len(expr.Arguments)))
+		// Check argument count for non-variadic functions
+		if !funcType.Variadic {
+			if len(expr.Arguments) != len(funcType.Parameters) {
+				tc.addError(expr.Pos(),
+					fmt.Sprintf("Expected %d arguments, got %d",
+						len(funcType.Parameters), len(expr.Arguments)))
+			}
+		} else {
+			// For variadic functions, check minimum argument count
+			if len(expr.Arguments) < len(funcType.Parameters) {
+				tc.addError(expr.Pos(),
+					fmt.Sprintf("Expected at least %d arguments, got %d",
+						len(funcType.Parameters), len(expr.Arguments)))
+			}
 		}
 		
 		// Check argument types
 		for i, arg := range expr.Arguments {
+			argType := tc.checkExpression(arg)
+			
 			if i < len(funcType.Parameters) {
-				argType := tc.checkExpression(arg)
+				// Check regular parameters
 				expectedType := funcType.Parameters[i]
 				if !tc.isAssignable(argType, expectedType) {
 					tc.addError(expr.Pos(),
 						fmt.Sprintf("Argument %d: cannot assign type '%s' to parameter of type '%s'",
 							i+1, argType.String(), expectedType.String()))
 				}
+			} else if funcType.Variadic {
+				// For variadic arguments, we accept any type for now
+				// In a more sophisticated implementation, we would check against the variadic parameter type
+				continue
 			}
 		}
 		
@@ -249,6 +267,20 @@ func (tc *TypeChecker) checkCallExpression(expr *ast.CallExpression) Type {
 	
 	tc.addError(expr.Pos(),
 		fmt.Sprintf("Cannot call non-function type '%s'", calleeType.String()))
+	return UndefinedType
+}
+
+// checkIdentifier type checks an identifier and reports undefined variables/functions
+func (tc *TypeChecker) checkIdentifier(expr *ast.Identifier) Type {
+	if symbol, exists := tc.resolver.Lookup(expr.Name); exists {
+		return symbol.Type
+	}
+	
+	// In strict mode, report undefined identifiers as errors
+	if tc.strictMode {
+		tc.addError(expr.Pos(), fmt.Sprintf("Undefined identifier '%s'", expr.Name))
+	}
+	
 	return UndefinedType
 }
 
@@ -268,7 +300,31 @@ func (tc *TypeChecker) checkMemberExpression(expr *ast.MemberExpression) Type {
 		}
 	}
 	
-	// TODO: Handle object property access
+	// Handle object property access
+	if objType, ok := objectType.(*ObjectType); ok {
+		if !expr.Computed {
+			// Property access like obj.prop
+			if propIdent, ok := expr.Property.(*ast.Identifier); ok {
+				if propType, exists := objType.Properties[propIdent.Name]; exists {
+					return propType
+				}
+				if tc.strictMode {
+					tc.addError(expr.Pos(),
+						fmt.Sprintf("Property '%s' does not exist on object", propIdent.Name))
+				}
+			}
+		} else {
+			// Computed property access like obj[prop]
+			propType := tc.checkExpression(expr.Property)
+			if !IsStringType(propType) {
+				tc.addError(expr.Pos(),
+					fmt.Sprintf("Object property key must be string, got '%s'", propType.String()))
+			}
+			// For computed access, we can't determine the exact property type at compile time
+			return UndefinedType
+		}
+	}
+	
 	return UndefinedType
 }
 

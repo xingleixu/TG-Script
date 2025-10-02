@@ -129,6 +129,20 @@ func (r *Resolver) defineBuiltins() {
 		}
 		r.globalScope.Define(name, symbol)
 	}
+	
+	// Define console object with log method
+	consoleType := &ObjectType{
+		Properties: map[string]Type{
+			"log": NewVariadicFunctionType([]Type{}, VoidType), // console.log accepts any number of arguments
+		},
+	}
+	
+	consoleSymbol := &Symbol{
+		Name: "console",
+		Type: consoleType,
+		Kind: VariableSymbol,
+	}
+	r.globalScope.Define("console", consoleSymbol)
 }
 
 // EnterScope creates and enters a new scope

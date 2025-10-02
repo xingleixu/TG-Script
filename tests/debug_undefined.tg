@@ -1,0 +1,4 @@
+// Test undefined function
+let x = 42;
+let result = undefinedFunction(x);
+console.log(result);
