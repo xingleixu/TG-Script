@@ -1,0 +1,15 @@
+// 简单的扩展类型测试
+
+// 扩展整数类型
+let a: int8 = 100;
+let b: int16 = 1000;
+let c: int32 = 100000;
+let d: int64 = 1000000;
+
+// 扩展浮点类型
+let e: float32 = 3.14;
+let f: float64 = 3.141592653589793;
+
+// 基本运算
+let sum = a + b;
+let product = e * f;

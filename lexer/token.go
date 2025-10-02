@@ -186,6 +186,14 @@ const (
 	// TG-Script optimized types
 	INT_T   // int (optimized integer type)
 	FLOAT_T // float (optimized floating point type)
+	
+	// Extended numeric types
+	INT8_T   // int8 (8-bit signed integer)
+	INT16_T  // int16 (16-bit signed integer)
+	INT32_T  // int32 (32-bit signed integer)
+	INT64_T  // int64 (64-bit signed integer)
+	FLOAT32_T // float32 (32-bit floating point)
+	FLOAT64_T // float64 (64-bit floating point)
 
 	// Import/Export
 	IMPORT // import
@@ -331,6 +339,12 @@ var tokenNames = [...]string{
 	SYMBOL:      "symbol",
 	INT_T:       "int",
 	FLOAT_T:     "float",
+	INT8_T:      "int8",
+	INT16_T:     "int16",
+	INT32_T:     "int32",
+	INT64_T:     "int64",
+	FLOAT32_T:   "float32",
+	FLOAT64_T:   "float64",
 	IMPORT:      "import",
 	EXPORT:      "export",
 	FROM:        "from",

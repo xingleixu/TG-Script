@@ -1,0 +1,9 @@
+// 简单的函数参数类型测试
+
+function testInt8(a: int8): int8 {
+    return a;
+}
+
+function testFloat32(b: float32): float32 {
+    return b;
+}

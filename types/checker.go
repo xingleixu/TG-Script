@@ -733,6 +733,19 @@ func (tc *TypeChecker) resolveTypeAnnotation(annotation ast.TypeNode) Type {
 			return NullType
 		case lexer.UNDEFINED:
 			return UndefinedType
+		// Extended numeric types
+		case lexer.INT8_T:
+			return Int8Type
+		case lexer.INT16_T:
+			return Int16Type
+		case lexer.INT32_T:
+			return Int32Type
+		case lexer.INT64_T:
+			return Int64Type
+		case lexer.FLOAT32_T:
+			return Float32Type
+		case lexer.FLOAT64_T:
+			return Float64Type
 		default:
 			return UndefinedType
 		}
