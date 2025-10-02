@@ -1,0 +1,26 @@
+// Test file for comprehensive error reporting
+
+// Undefined identifier
+let result = undefinedVar;
+
+// Type mismatch in binary operation
+let sum = "hello" + 123;
+
+// Invalid unary operator
+let neg = -"string";
+
+// Invalid array index
+let arr = [1, 2, 3];
+let item = arr["invalid"];
+
+// Array with mixed types
+let mixed = [1, "string", true];
+
+// Invalid condition in if statement
+if ("string") {
+    console.log("This should error");
+}
+
+// Call non-function
+let notFunc = 42;
+notFunc();

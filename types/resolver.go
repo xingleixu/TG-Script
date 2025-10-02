@@ -284,9 +284,9 @@ func (r *Resolver) resolveExpression(expr ast.Expression) {
 
 // resolveIdentifier resolves an identifier
 func (r *Resolver) resolveIdentifier(expr *ast.Identifier) {
-	if _, exists := r.Lookup(expr.Name); !exists {
-		r.addError(fmt.Errorf("undefined identifier '%s' at %s", expr.Name, expr.NamePos))
-	}
+	// Note: We don't report undefined identifier errors here because
+	// the TypeChecker handles this with more detailed error messages
+	_, _ = r.Lookup(expr.Name)
 }
 
 // resolveCallExpression resolves a call expression

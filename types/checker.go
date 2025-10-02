@@ -7,14 +7,43 @@ import (
 )
 
 // TypeError represents a type checking error
+// ErrorCode represents different types of type errors
+type ErrorCode string
+
+const (
+	UndefinedIdentifierError    ErrorCode = "E001"
+	TypeMismatchError          ErrorCode = "E002"
+	InvalidOperatorError       ErrorCode = "E003"
+	InvalidCallError           ErrorCode = "E004"
+	InvalidAssignmentError     ErrorCode = "E005"
+	InvalidMemberAccessError   ErrorCode = "E006"
+	InvalidArrayElementError   ErrorCode = "E007"
+	InvalidReturnTypeError     ErrorCode = "E008"
+	InvalidConditionError      ErrorCode = "E009"
+	ArgumentCountMismatchError ErrorCode = "E010"
+)
+
 type TypeError struct {
-	Position lexer.Position
-	Message  string
+	Position   lexer.Position
+	Message    string
+	Code       ErrorCode
+	Suggestion string
+	Context    string
 }
 
 func (e *TypeError) Error() string {
-	return fmt.Sprintf("Type error at line %d, column %d: %s", 
-		e.Position.Line, e.Position.Column, e.Message)
+	result := fmt.Sprintf("[%s] Type error at line %d, column %d: %s", 
+		e.Code, e.Position.Line, e.Position.Column, e.Message)
+	
+	if e.Context != "" {
+		result += fmt.Sprintf("\n  Context: %s", e.Context)
+	}
+	
+	if e.Suggestion != "" {
+		result += fmt.Sprintf("\n  Suggestion: %s", e.Suggestion)
+	}
+	
+	return result
 }
 
 // TypeChecker performs static type checking
@@ -153,16 +182,26 @@ func (tc *TypeChecker) checkBinaryExpression(expr *ast.BinaryExpression) Type {
 			}
 			return IntType
 		}
-		tc.addError(expr.Pos(), 
+		suggestion := fmt.Sprintf("Use numeric types (int or float) with operator '%s'", operator)
+		context := fmt.Sprintf("Left operand: %s, Right operand: %s", leftType.String(), rightType.String())
+		tc.addDetailedError(expr.Pos(), 
 			fmt.Sprintf("Cannot apply operator '%s' to types '%s' and '%s'",
-				operator, leftType.String(), rightType.String()))
+				operator, leftType.String(), rightType.String()),
+			InvalidOperatorError,
+			suggestion,
+			context)
 		return UndefinedType
 		
 	case "-", "*", "/", "%":
 		if !IsNumericType(leftType) || !IsNumericType(rightType) {
-			tc.addError(expr.Pos(),
+			suggestion := fmt.Sprintf("Convert operands to numeric types (int or float) before using '%s'", operator)
+			context := fmt.Sprintf("Left operand: %s, Right operand: %s", leftType.String(), rightType.String())
+			tc.addDetailedError(expr.Pos(),
 				fmt.Sprintf("Cannot apply operator '%s' to non-numeric types '%s' and '%s'",
-					operator, leftType.String(), rightType.String()))
+					operator, leftType.String(), rightType.String()),
+				InvalidOperatorError,
+				suggestion,
+				context)
 			return UndefinedType
 		}
 		if leftType.Equals(FloatType) || rightType.Equals(FloatType) {
@@ -176,9 +215,14 @@ func (tc *TypeChecker) checkBinaryExpression(expr *ast.BinaryExpression) Type {
 		
 	case "<", ">", "<=", ">=":
 		if !IsNumericType(leftType) || !IsNumericType(rightType) {
-			tc.addError(expr.Pos(),
+			suggestion := "Use numeric types (int or float) for comparison operations"
+			context := fmt.Sprintf("Left operand: %s, Right operand: %s", leftType.String(), rightType.String())
+			tc.addDetailedError(expr.Pos(),
 				fmt.Sprintf("Cannot compare non-numeric types '%s' and '%s'",
-					leftType.String(), rightType.String()))
+					leftType.String(), rightType.String()),
+				InvalidOperatorError,
+				suggestion,
+				context)
 		}
 		return BooleanType
 		
@@ -198,9 +242,14 @@ func (tc *TypeChecker) checkUnaryExpression(expr *ast.UnaryExpression) Type {
 	switch operator {
 	case "+", "-":
 		if !IsNumericType(operandType) {
-			tc.addError(expr.Pos(),
+			suggestion := fmt.Sprintf("Use numeric types (int or float) with unary operator '%s'", operator)
+			context := fmt.Sprintf("Operand type: %s", operandType.String())
+			tc.addDetailedError(expr.Pos(),
 				fmt.Sprintf("Cannot apply unary operator '%s' to non-numeric type '%s'",
-					operator, operandType.String()))
+					operator, operandType.String()),
+				InvalidOperatorError,
+				suggestion,
+				context)
 			return UndefinedType
 		}
 		return operandType
@@ -210,9 +259,14 @@ func (tc *TypeChecker) checkUnaryExpression(expr *ast.UnaryExpression) Type {
 		
 	case "++", "--":
 		if !IsNumericType(operandType) {
-			tc.addError(expr.Pos(),
+			suggestion := fmt.Sprintf("Use numeric types (int or float) with operator '%s'", operator)
+			context := fmt.Sprintf("Operand type: %s", operandType.String())
+			tc.addDetailedError(expr.Pos(),
 				fmt.Sprintf("Cannot apply operator '%s' to non-numeric type '%s'",
-					operator, operandType.String()))
+					operator, operandType.String()),
+				InvalidOperatorError,
+				suggestion,
+				context)
 			return UndefinedType
 		}
 		return operandType
@@ -230,16 +284,26 @@ func (tc *TypeChecker) checkCallExpression(expr *ast.CallExpression) Type {
 		// Check argument count for non-variadic functions
 		if !funcType.Variadic {
 			if len(expr.Arguments) != len(funcType.Parameters) {
-				tc.addError(expr.Pos(),
+				suggestion := fmt.Sprintf("Provide exactly %d arguments to match function signature", len(funcType.Parameters))
+				context := fmt.Sprintf("Function signature requires %d parameters", len(funcType.Parameters))
+				tc.addDetailedError(expr.Pos(),
 					fmt.Sprintf("Expected %d arguments, got %d",
-						len(funcType.Parameters), len(expr.Arguments)))
+						len(funcType.Parameters), len(expr.Arguments)),
+					ArgumentCountMismatchError,
+					suggestion,
+					context)
 			}
 		} else {
 			// For variadic functions, check minimum argument count
 			if len(expr.Arguments) < len(funcType.Parameters) {
-				tc.addError(expr.Pos(),
+				suggestion := fmt.Sprintf("Provide at least %d arguments for this variadic function", len(funcType.Parameters))
+				context := fmt.Sprintf("Variadic function requires minimum %d parameters", len(funcType.Parameters))
+				tc.addDetailedError(expr.Pos(),
 					fmt.Sprintf("Expected at least %d arguments, got %d",
-						len(funcType.Parameters), len(expr.Arguments)))
+						len(funcType.Parameters), len(expr.Arguments)),
+					ArgumentCountMismatchError,
+					suggestion,
+					context)
 			}
 		}
 		
@@ -251,9 +315,14 @@ func (tc *TypeChecker) checkCallExpression(expr *ast.CallExpression) Type {
 				// Check regular parameters
 				expectedType := funcType.Parameters[i]
 				if !tc.isAssignable(argType, expectedType) {
-					tc.addError(expr.Pos(),
+					suggestion := fmt.Sprintf("Convert argument %d to type '%s' or check function signature", i+1, expectedType.String())
+					context := fmt.Sprintf("Function expects parameter %d of type '%s', but got '%s'", i+1, expectedType.String(), argType.String())
+					tc.addDetailedError(expr.Pos(),
 						fmt.Sprintf("Argument %d: cannot assign type '%s' to parameter of type '%s'",
-							i+1, argType.String(), expectedType.String()))
+							i+1, argType.String(), expectedType.String()),
+						ArgumentCountMismatchError,
+						suggestion,
+						context)
 				}
 			} else if funcType.Variadic {
 				// For variadic arguments, we accept any type for now
@@ -265,8 +334,13 @@ func (tc *TypeChecker) checkCallExpression(expr *ast.CallExpression) Type {
 		return funcType.ReturnType
 	}
 	
-	tc.addError(expr.Pos(),
-		fmt.Sprintf("Cannot call non-function type '%s'", calleeType.String()))
+	suggestion := "Ensure the expression evaluates to a function before calling it"
+	context := fmt.Sprintf("Attempting to call expression of type '%s'", calleeType.String())
+	tc.addDetailedError(expr.Pos(),
+		fmt.Sprintf("Cannot call non-function type '%s'", calleeType.String()),
+		InvalidCallError,
+		suggestion,
+		context)
 	return UndefinedType
 }
 
@@ -278,7 +352,13 @@ func (tc *TypeChecker) checkIdentifier(expr *ast.Identifier) Type {
 	
 	// In strict mode, report undefined identifiers as errors
 	if tc.strictMode {
-		tc.addError(expr.Pos(), fmt.Sprintf("Undefined identifier '%s'", expr.Name))
+		suggestion := fmt.Sprintf("Declare '%s' before using it, or check for typos", expr.Name)
+		context := fmt.Sprintf("Identifier '%s' is not defined in the current scope", expr.Name)
+		tc.addDetailedError(expr.Pos(), 
+			fmt.Sprintf("Undefined identifier '%s'", expr.Name),
+			UndefinedIdentifierError,
+			suggestion,
+			context)
 	}
 	
 	return UndefinedType
@@ -293,8 +373,13 @@ func (tc *TypeChecker) checkMemberExpression(expr *ast.MemberExpression) Type {
 			// Check index type
 			indexType := tc.checkExpression(expr.Property)
 			if !IsNumericType(indexType) {
-				tc.addError(expr.Pos(),
-					fmt.Sprintf("Array index must be numeric, got '%s'", indexType.String()))
+				suggestion := "Use numeric types (int or float) for array indexing"
+				context := fmt.Sprintf("Index type: %s", indexType.String())
+				tc.addDetailedError(expr.Pos(),
+					fmt.Sprintf("Array index must be numeric, got '%s'", indexType.String()),
+					InvalidArrayElementError,
+					suggestion,
+					context)
 			}
 			return arrayType.ElementType
 		}
@@ -309,16 +394,26 @@ func (tc *TypeChecker) checkMemberExpression(expr *ast.MemberExpression) Type {
 					return propType
 				}
 				if tc.strictMode {
-					tc.addError(expr.Pos(),
-						fmt.Sprintf("Property '%s' does not exist on object", propIdent.Name))
+					suggestion := fmt.Sprintf("Check if property '%s' exists or verify the object type", propIdent.Name)
+					context := fmt.Sprintf("Accessing property '%s' on object of type '%s'", propIdent.Name, objectType.String())
+					tc.addDetailedError(expr.Pos(),
+						fmt.Sprintf("Property '%s' does not exist on object", propIdent.Name),
+						InvalidMemberAccessError,
+						suggestion,
+						context)
 				}
 			}
 		} else {
 			// Computed property access like obj[prop]
 			propType := tc.checkExpression(expr.Property)
 			if !IsStringType(propType) {
-				tc.addError(expr.Pos(),
-					fmt.Sprintf("Object property key must be string, got '%s'", propType.String()))
+				suggestion := "Use string type for object property keys"
+				context := fmt.Sprintf("Property key type: %s", propType.String())
+				tc.addDetailedError(expr.Pos(),
+					fmt.Sprintf("Object property key must be string, got '%s'", propType.String()),
+					InvalidMemberAccessError,
+					suggestion,
+					context)
 			}
 			// For computed access, we can't determine the exact property type at compile time
 			return UndefinedType
@@ -334,9 +429,14 @@ func (tc *TypeChecker) checkAssignmentExpression(expr *ast.AssignmentExpression)
 	rightType := tc.checkExpression(expr.Right)
 	
 	if !tc.isAssignable(rightType, leftType) {
-		tc.addError(expr.Pos(),
+		suggestion := fmt.Sprintf("Convert the value to type '%s' or change the variable type", leftType.String())
+		context := fmt.Sprintf("Assigning value of type '%s' to variable of type '%s'", rightType.String(), leftType.String())
+		tc.addDetailedError(expr.Pos(),
 			fmt.Sprintf("Cannot assign type '%s' to type '%s'",
-				rightType.String(), leftType.String()))
+				rightType.String(), leftType.String()),
+			InvalidAssignmentError,
+			suggestion,
+			context)
 	}
 	
 	return rightType
@@ -358,8 +458,13 @@ func (tc *TypeChecker) checkArrayLiteral(expr *ast.ArrayLiteral) Type {
 			} else if !elementType.Equals(elemType) {
 				// TODO: In a more sophisticated implementation,
 				// we would create union types or find common supertypes
-				tc.addError(expr.Pos(),
-					"Array elements must have the same type")
+				suggestion := fmt.Sprintf("Ensure all array elements have the same type '%s'", elementType.String())
+				context := fmt.Sprintf("Element %d has type '%s', but expected '%s'", i, elemType.String(), elementType.String())
+				tc.addDetailedError(expr.Pos(),
+					"Array elements must have the same type",
+					TypeMismatchError,
+					suggestion,
+					context)
 				break
 			}
 		}
@@ -387,8 +492,13 @@ func (tc *TypeChecker) checkIfStatement(stmt *ast.IfStatement) {
 	// Check condition
 	condType := tc.checkExpression(stmt.Test)
 	if tc.strictMode && !IsBooleanType(condType) {
-		tc.addError(stmt.Pos(),
-			fmt.Sprintf("If condition must be boolean, got '%s'", condType.String()))
+		suggestion := "Use boolean expressions in if conditions (e.g., x > 0, x === true)"
+		context := fmt.Sprintf("Condition type: %s", condType.String())
+		tc.addDetailedError(stmt.Pos(),
+			fmt.Sprintf("If condition must be boolean, got '%s'", condType.String()),
+			InvalidConditionError,
+			suggestion,
+			context)
 	}
 	
 	// Check consequent
@@ -405,8 +515,13 @@ func (tc *TypeChecker) checkWhileStatement(stmt *ast.WhileStatement) {
 	// Check condition
 	condType := tc.checkExpression(stmt.Test)
 	if tc.strictMode && !IsBooleanType(condType) {
-		tc.addError(stmt.Pos(),
-			fmt.Sprintf("While condition must be boolean, got '%s'", condType.String()))
+		suggestion := "Use boolean expressions in while conditions (e.g., x > 0, x !== null)"
+		context := fmt.Sprintf("Condition type: %s", condType.String())
+		tc.addDetailedError(stmt.Pos(),
+			fmt.Sprintf("While condition must be boolean, got '%s'", condType.String()),
+			InvalidConditionError,
+			suggestion,
+			context)
 	}
 	
 	// Check body
@@ -427,8 +542,13 @@ func (tc *TypeChecker) checkForStatement(stmt *ast.ForStatement) {
 	if stmt.Test != nil {
 		condType := tc.checkExpression(stmt.Test)
 		if tc.strictMode && !IsBooleanType(condType) {
-			tc.addError(stmt.Pos(),
-				fmt.Sprintf("For condition must be boolean, got '%s'", condType.String()))
+			suggestion := "Use boolean expressions in for conditions (e.g., i < 10, x !== null)"
+			context := fmt.Sprintf("Condition type: %s", condType.String())
+			tc.addDetailedError(stmt.Pos(),
+				fmt.Sprintf("For condition must be boolean, got '%s'", condType.String()),
+				InvalidConditionError,
+				suggestion,
+				context)
 		}
 	}
 	
@@ -512,11 +632,23 @@ func (tc *TypeChecker) isAssignable(source, target Type) bool {
 	return false
 }
 
-// addError adds a type error
+// addError adds a type error with basic information
 func (tc *TypeChecker) addError(pos lexer.Position, message string) {
 	tc.errors = append(tc.errors, &TypeError{
 		Position: pos,
 		Message:  message,
+		Code:     TypeMismatchError, // Default error code
+	})
+}
+
+// addDetailedError adds a type error with detailed information
+func (tc *TypeChecker) addDetailedError(pos lexer.Position, message string, code ErrorCode, suggestion string, context string) {
+	tc.errors = append(tc.errors, &TypeError{
+		Position:   pos,
+		Message:    message,
+		Code:       code,
+		Suggestion: suggestion,
+		Context:    context,
 	})
 }
 
