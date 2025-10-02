@@ -162,6 +162,8 @@ func checkScript(source, filename string) error {
 		return fmt.Errorf("parsing failed")
 	}
 	
+
+	
 	// Type checking
 	checker := types.NewTypeChecker()
 	typeErrors := checker.Check(program)

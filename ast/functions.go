@@ -173,6 +173,25 @@ func (afe *ArrowFunctionExpression) String() string {
 }
 func (afe *ArrowFunctionExpression) expressionNode() {}
 
+// ArrowFunctionParams represents arrow function parameters in parentheses.
+// This is used to distinguish between grouped expressions and arrow function parameters.
+type ArrowFunctionParams struct {
+	LParen     lexer.Position // position of '('
+	Parameters []*Parameter   // parameters
+	RParen     lexer.Position // position of ')'
+}
+
+func (afp *ArrowFunctionParams) Pos() lexer.Position { return afp.LParen }
+func (afp *ArrowFunctionParams) End() lexer.Position { return afp.RParen }
+func (afp *ArrowFunctionParams) String() string {
+	var params []string
+	for _, param := range afp.Parameters {
+		params = append(params, param.String())
+	}
+	return "(" + strings.Join(params, ", ") + ")"
+}
+func (afp *ArrowFunctionParams) expressionNode() {}
+
 // ============================================================================
 // CLASS RELATED NODES
 // ============================================================================

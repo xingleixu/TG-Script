@@ -64,12 +64,14 @@ type Identifier struct {
 }
 
 func (i *Identifier) Pos() lexer.Position { return i.NamePos }
-func (i *Identifier) End() lexer.Position { return lexer.Position{
-	Line:   i.NamePos.Line,
-	Column: i.NamePos.Column + len(i.Name),
-	Offset: i.NamePos.Offset + len(i.Name),
-} }
-func (i *Identifier) String() string { return i.Name }
+func (i *Identifier) End() lexer.Position {
+	return lexer.Position{
+		Line:   i.NamePos.Line,
+		Column: i.NamePos.Column + len(i.Name),
+		Offset: i.NamePos.Offset + len(i.Name),
+	}
+}
+func (i *Identifier) String() string  { return i.Name }
 func (i *Identifier) expressionNode() {}
 func (i *Identifier) bindingTarget()  {}
 
@@ -85,12 +87,14 @@ type IntegerLiteral struct {
 }
 
 func (il *IntegerLiteral) Pos() lexer.Position { return il.ValuePos }
-func (il *IntegerLiteral) End() lexer.Position { return lexer.Position{
-	Line:   il.ValuePos.Line,
-	Column: il.ValuePos.Column + len(il.Raw),
-	Offset: il.ValuePos.Offset + len(il.Raw),
-} }
-func (il *IntegerLiteral) String() string { return il.Raw }
+func (il *IntegerLiteral) End() lexer.Position {
+	return lexer.Position{
+		Line:   il.ValuePos.Line,
+		Column: il.ValuePos.Column + len(il.Raw),
+		Offset: il.ValuePos.Offset + len(il.Raw),
+	}
+}
+func (il *IntegerLiteral) String() string  { return il.Raw }
 func (il *IntegerLiteral) expressionNode() {}
 
 // FloatLiteral represents a floating-point literal.
@@ -101,12 +105,14 @@ type FloatLiteral struct {
 }
 
 func (fl *FloatLiteral) Pos() lexer.Position { return fl.ValuePos }
-func (fl *FloatLiteral) End() lexer.Position { return lexer.Position{
-	Line:   fl.ValuePos.Line,
-	Column: fl.ValuePos.Column + len(fl.Raw),
-	Offset: fl.ValuePos.Offset + len(fl.Raw),
-} }
-func (fl *FloatLiteral) String() string { return fl.Raw }
+func (fl *FloatLiteral) End() lexer.Position {
+	return lexer.Position{
+		Line:   fl.ValuePos.Line,
+		Column: fl.ValuePos.Column + len(fl.Raw),
+		Offset: fl.ValuePos.Offset + len(fl.Raw),
+	}
+}
+func (fl *FloatLiteral) String() string  { return fl.Raw }
 func (fl *FloatLiteral) expressionNode() {}
 
 // StringLiteral represents a string literal.
@@ -117,12 +123,14 @@ type StringLiteral struct {
 }
 
 func (sl *StringLiteral) Pos() lexer.Position { return sl.ValuePos }
-func (sl *StringLiteral) End() lexer.Position { return lexer.Position{
-	Line:   sl.ValuePos.Line,
-	Column: sl.ValuePos.Column + len(sl.Raw),
-	Offset: sl.ValuePos.Offset + len(sl.Raw),
-} }
-func (sl *StringLiteral) String() string { return sl.Raw }
+func (sl *StringLiteral) End() lexer.Position {
+	return lexer.Position{
+		Line:   sl.ValuePos.Line,
+		Column: sl.ValuePos.Column + len(sl.Raw),
+		Offset: sl.ValuePos.Offset + len(sl.Raw),
+	}
+}
+func (sl *StringLiteral) String() string  { return sl.Raw }
 func (sl *StringLiteral) expressionNode() {}
 
 // BooleanLiteral represents a boolean literal.
@@ -133,12 +141,14 @@ type BooleanLiteral struct {
 }
 
 func (bl *BooleanLiteral) Pos() lexer.Position { return bl.ValuePos }
-func (bl *BooleanLiteral) End() lexer.Position { return lexer.Position{
-	Line:   bl.ValuePos.Line,
-	Column: bl.ValuePos.Column + len(bl.Raw),
-	Offset: bl.ValuePos.Offset + len(bl.Raw),
-} }
-func (bl *BooleanLiteral) String() string { return bl.Raw }
+func (bl *BooleanLiteral) End() lexer.Position {
+	return lexer.Position{
+		Line:   bl.ValuePos.Line,
+		Column: bl.ValuePos.Column + len(bl.Raw),
+		Offset: bl.ValuePos.Offset + len(bl.Raw),
+	}
+}
+func (bl *BooleanLiteral) String() string  { return bl.Raw }
 func (bl *BooleanLiteral) expressionNode() {}
 
 // NullLiteral represents a null literal.
@@ -147,12 +157,14 @@ type NullLiteral struct {
 }
 
 func (nl *NullLiteral) Pos() lexer.Position { return nl.ValuePos }
-func (nl *NullLiteral) End() lexer.Position { return lexer.Position{
-	Line:   nl.ValuePos.Line,
-	Column: nl.ValuePos.Column + 4, // "null"
-	Offset: nl.ValuePos.Offset + 4,
-} }
-func (nl *NullLiteral) String() string { return "null" }
+func (nl *NullLiteral) End() lexer.Position {
+	return lexer.Position{
+		Line:   nl.ValuePos.Line,
+		Column: nl.ValuePos.Column + 4, // "null"
+		Offset: nl.ValuePos.Offset + 4,
+	}
+}
+func (nl *NullLiteral) String() string  { return "null" }
 func (nl *NullLiteral) expressionNode() {}
 
 // UndefinedLiteral represents an undefined literal.
@@ -161,12 +173,14 @@ type UndefinedLiteral struct {
 }
 
 func (ul *UndefinedLiteral) Pos() lexer.Position { return ul.ValuePos }
-func (ul *UndefinedLiteral) End() lexer.Position { return lexer.Position{
-	Line:   ul.ValuePos.Line,
-	Column: ul.ValuePos.Column + 9, // "undefined"
-	Offset: ul.ValuePos.Offset + 9,
-} }
-func (ul *UndefinedLiteral) String() string { return "undefined" }
+func (ul *UndefinedLiteral) End() lexer.Position {
+	return lexer.Position{
+		Line:   ul.ValuePos.Line,
+		Column: ul.ValuePos.Column + 9, // "undefined"
+		Offset: ul.ValuePos.Offset + 9,
+	}
+}
+func (ul *UndefinedLiteral) String() string  { return "undefined" }
 func (ul *UndefinedLiteral) expressionNode() {}
 
 // VoidLiteral represents a void literal.
@@ -182,7 +196,7 @@ func (vl *VoidLiteral) End() lexer.Position {
 		Offset: vl.ValuePos.Offset + 4,
 	}
 }
-func (vl *VoidLiteral) String() string { return "void" }
+func (vl *VoidLiteral) String() string  { return "void" }
 func (vl *VoidLiteral) expressionNode() {}
 
 // ============================================================================
@@ -202,7 +216,7 @@ func (be *BinaryExpression) End() lexer.Position { return be.Right.End() }
 func (be *BinaryExpression) String() string {
 	leftStr := be.Left.String()
 	rightStr := be.Right.String()
-	
+
 	// Add parentheses around member expressions
 	if _, isMember := be.Left.(*MemberExpression); isMember {
 		leftStr = "(" + leftStr + ")"
@@ -210,7 +224,7 @@ func (be *BinaryExpression) String() string {
 	if _, isMember := be.Right.(*MemberExpression); isMember {
 		rightStr = "(" + rightStr + ")"
 	}
-	
+
 	return "(" + leftStr + " " + be.Operator.String() + " " + rightStr + ")"
 }
 func (be *BinaryExpression) expressionNode() {}
@@ -271,11 +285,13 @@ type CallExpression struct {
 }
 
 func (ce *CallExpression) Pos() lexer.Position { return ce.Callee.Pos() }
-func (ce *CallExpression) End() lexer.Position { return lexer.Position{
-	Line:   ce.RParen.Line,
-	Column: ce.RParen.Column + 1,
-	Offset: ce.RParen.Offset + 1,
-} }
+func (ce *CallExpression) End() lexer.Position {
+	return lexer.Position{
+		Line:   ce.RParen.Line,
+		Column: ce.RParen.Column + 1,
+		Offset: ce.RParen.Offset + 1,
+	}
+}
 func (ce *CallExpression) String() string {
 	var args []string
 	for _, arg := range ce.Arguments {
@@ -347,11 +363,13 @@ type ArrayLiteral struct {
 }
 
 func (al *ArrayLiteral) Pos() lexer.Position { return al.LBracket }
-func (al *ArrayLiteral) End() lexer.Position { return lexer.Position{
-	Line:   al.RBracket.Line,
-	Column: al.RBracket.Column + 1,
-	Offset: al.RBracket.Offset + 1,
-} }
+func (al *ArrayLiteral) End() lexer.Position {
+	return lexer.Position{
+		Line:   al.RBracket.Line,
+		Column: al.RBracket.Column + 1,
+		Offset: al.RBracket.Offset + 1,
+	}
+}
 func (al *ArrayLiteral) String() string {
 	var elements []string
 	for _, elem := range al.Elements {
@@ -367,12 +385,12 @@ func (al *ArrayLiteral) expressionNode() {}
 
 // Property represents a property in an object literal.
 type Property struct {
-	Key      Expression     // property key
-	Colon    lexer.Position // position of ':'
-	Value    Expression     // property value
-	Computed bool           // true for [key]: value
-	Method   bool           // true for method shorthand
-	Shorthand bool          // true for {x} shorthand
+	Key       Expression     // property key
+	Colon     lexer.Position // position of ':'
+	Value     Expression     // property value
+	Computed  bool           // true for [key]: value
+	Method    bool           // true for method shorthand
+	Shorthand bool           // true for {x} shorthand
 }
 
 func (p *Property) Pos() lexer.Position { return p.Key.Pos() }
@@ -395,11 +413,13 @@ type ObjectLiteral struct {
 }
 
 func (ol *ObjectLiteral) Pos() lexer.Position { return ol.LBrace }
-func (ol *ObjectLiteral) End() lexer.Position { return lexer.Position{
-	Line:   ol.RBrace.Line,
-	Column: ol.RBrace.Column + 1,
-	Offset: ol.RBrace.Offset + 1,
-} }
+func (ol *ObjectLiteral) End() lexer.Position {
+	return lexer.Position{
+		Line:   ol.RBrace.Line,
+		Column: ol.RBrace.Column + 1,
+		Offset: ol.RBrace.Offset + 1,
+	}
+}
 func (ol *ObjectLiteral) String() string {
 	var props []string
 	for _, prop := range ol.Properties {

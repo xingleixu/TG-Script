@@ -95,6 +95,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(lexer.OPTIONAL, p.parseOptionalChainingExpression)
 	p.registerInfix(lexer.INCREMENT, p.parsePostfixIncrementExpression)
 	p.registerInfix(lexer.DECREMENT, p.parsePostfixDecrementExpression)
+	p.registerInfix(lexer.ARROW, p.parseArrowFunctionExpression)
 
 	return p
 }
@@ -212,6 +213,7 @@ type Precedence int
 const (
 	_ Precedence = iota
 	LOWEST
+	ARROW       // =>
 	ASSIGN      // =, +=, -=, etc.
 	TERNARY     // ? :
 	NULLISH     // ??
@@ -236,49 +238,51 @@ const (
 
 // precedences maps token types to their precedence levels.
 var precedences = map[lexer.Token]Precedence{
+	lexer.ARROW:         ARROW,
+
 	lexer.ASSIGN:        ASSIGN,
 	lexer.ADD_ASSIGN:    ASSIGN,
 	lexer.SUB_ASSIGN:    ASSIGN,
 	lexer.MUL_ASSIGN:    ASSIGN,
 	lexer.DIV_ASSIGN:    ASSIGN,
 	lexer.MOD_ASSIGN:    ASSIGN,
-	
+
 	lexer.QUESTION:      TERNARY,
-	
+
 	lexer.NULLISH: NULLISH,
-	
+
 	lexer.LOGICAL_OR:    LOGICAL_OR,
 	lexer.LOGICAL_AND:   LOGICAL_AND,
-	
+
 	lexer.BIT_OR:        BITWISE_OR,
 	lexer.BIT_XOR:       BITWISE_XOR,
 	lexer.BIT_AND:       BITWISE_AND,
-	
+
 	lexer.EQ:            EQUALITY,
 	lexer.NE:            EQUALITY,
 	lexer.STRICT_EQ:     EQUALITY,
 	lexer.STRICT_NE:     EQUALITY,
-	
+
 	lexer.LT:            RELATIONAL,
 	lexer.GT:            RELATIONAL,
 	lexer.LE:            RELATIONAL,
 	lexer.GE:            RELATIONAL,
 	lexer.INSTANCEOF:    RELATIONAL,
 	lexer.IN:            RELATIONAL,
-	
+
 	lexer.BIT_LSHIFT:    SHIFT,
 	lexer.BIT_RSHIFT:    SHIFT,
 	lexer.BIT_URSHIFT:   SHIFT,
-	
+
 	lexer.ADD:           SUM,
 	lexer.SUB:           SUM,
-	
+
 	lexer.MUL:           PRODUCT,
 	lexer.DIV:           PRODUCT,
 	lexer.MOD:           PRODUCT,
-	
+
 	lexer.POW:           EXPONENT,
-	
+
 	lexer.LPAREN:        CALL,
 	lexer.LBRACKET:      CALL,
 	lexer.DOT:           MEMBER,

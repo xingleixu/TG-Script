@@ -71,7 +71,7 @@ func (p *Parser) parsePrimaryType() ast.TypeNode {
 		return p.parseArrayOrTupleType()
 	case lexer.FUNCTION:
 		return p.parseFunctionType()
-	case lexer.STRING_T, lexer.NUMBER_T, lexer.BOOLEAN_T, lexer.VOID, lexer.NULL, lexer.UNDEFINED:
+	case lexer.STRING_T, lexer.NUMBER_T, lexer.BOOLEAN_T, lexer.INT_T, lexer.FLOAT_T, lexer.VOID, lexer.NULL, lexer.UNDEFINED:
 		// Handle primitive type tokens
 		return p.parseTypeReference()
 	default:
@@ -89,7 +89,7 @@ func (p *Parser) parsePrimaryType() ast.TypeNode {
 func (p *Parser) parseTypeReference() ast.TypeNode {
 	// Handle basic type keywords
 	switch p.currentToken.Type {
-	case lexer.STRING_T, lexer.NUMBER_T, lexer.BOOLEAN_T, lexer.VOID, lexer.NULL, lexer.UNDEFINED, lexer.ANY, lexer.UNKNOWN, lexer.NEVER:
+	case lexer.STRING_T, lexer.NUMBER_T, lexer.BOOLEAN_T, lexer.INT_T, lexer.FLOAT_T, lexer.VOID, lexer.NULL, lexer.UNDEFINED, lexer.ANY, lexer.UNKNOWN, lexer.NEVER:
 		// Create BasicType for built-in types
 		return &ast.BasicType{
 			TypePos: p.currentToken.Position,

@@ -107,6 +107,7 @@ func (tc *TypeChecker) checkStatement(stmt ast.Statement) {
 func (tc *TypeChecker) checkVariableDeclaration(decl *ast.VariableDeclaration) {
 	for _, declarator := range decl.Declarations {
 		var declaredType Type = UndefinedType
+		var finalType Type = UndefinedType
 		
 		// Check if there's a type annotation
 		if declarator.TypeAnnotation != nil {
@@ -116,6 +117,7 @@ func (tc *TypeChecker) checkVariableDeclaration(decl *ast.VariableDeclaration) {
 		// Check initializer if present
 		if declarator.Init != nil {
 			initType := tc.checkExpression(declarator.Init)
+	
 			
 			// If we have both type annotation and initializer, check compatibility
 			if declarator.TypeAnnotation != nil {
@@ -131,9 +133,11 @@ func (tc *TypeChecker) checkVariableDeclaration(decl *ast.VariableDeclaration) {
 							declarator.Id.String(), declaredType.String(), initType.String()),
 					)
 				}
+				finalType = declaredType
 			} else {
 				// No type annotation, infer type from initializer
-				declaredType = initType
+				finalType = initType
+		
 			}
 		} else if declarator.TypeAnnotation == nil {
 			// No type annotation and no initializer - this should be an error in strict mode
@@ -146,11 +150,17 @@ func (tc *TypeChecker) checkVariableDeclaration(decl *ast.VariableDeclaration) {
 					fmt.Sprintf("Variable '%s' has no type information", declarator.Id.String()),
 				)
 			}
+			finalType = declaredType
+		} else {
+			finalType = declaredType
 		}
 		
-		// Add variable to symbol table
+		// Update variable type in symbol table (it was already defined during resolution)
 		if id, ok := declarator.Id.(*ast.Identifier); ok {
-			tc.resolver.Define(id.Name, declaredType, VariableSymbol, id.Pos())
+			if err := tc.resolver.UpdateType(id.Name, finalType); err != nil {
+				// If update fails, try to define it (fallback)
+				tc.resolver.Define(id.Name, finalType, VariableSymbol, id.Pos())
+			}
 		}
 	}
 }
@@ -193,6 +203,8 @@ func (tc *TypeChecker) checkExpression(expr ast.Expression) Type {
 		return tc.checkAssignmentExpression(e)
 	case *ast.ArrayLiteral:
 		return tc.checkArrayLiteral(e)
+	case *ast.ArrowFunctionExpression:
+		return tc.checkArrowFunctionExpression(e)
 	case *ast.Identifier:
 		return tc.checkIdentifier(e)
 	default:
@@ -387,7 +399,6 @@ func (tc *TypeChecker) checkIdentifier(expr *ast.Identifier) Type {
 	if symbol, exists := tc.resolver.Lookup(expr.Name); exists {
 		return symbol.Type
 	}
-	
 	// In strict mode, report undefined identifiers as errors
 	if tc.strictMode {
 		suggestion := fmt.Sprintf("Declare '%s' before using it, or check for typos", expr.Name)
@@ -515,6 +526,100 @@ func (tc *TypeChecker) checkArrayLiteral(expr *ast.ArrayLiteral) Type {
 	return NewArrayType(elementType)
 }
 
+// checkArrowFunctionExpression type checks an arrow function expression
+func (tc *TypeChecker) checkArrowFunctionExpression(expr *ast.ArrowFunctionExpression) Type {
+
+	
+	// Enter function scope
+	tc.resolver.EnterScope()
+	defer tc.resolver.ExitScope()
+	
+	// Process parameters and build parameter types
+	var paramTypes []Type
+	var paramsNeedInference []int // Track which parameters need type inference
+	
+	for i, param := range expr.Parameters {
+		var paramType Type = UndefinedType
+		if param.TypeAnnotation != nil {
+			paramType = tc.resolveTypeAnnotation(param.TypeAnnotation)
+		} else {
+			paramsNeedInference = append(paramsNeedInference, i)
+		}
+		paramTypes = append(paramTypes, paramType)
+		tc.resolver.Define(param.Name.Name, paramType, ParameterSymbol, param.Name.Pos())
+	}
+	
+	// Determine return type
+	var returnType Type = UndefinedType
+	if expr.ReturnType != nil {
+		returnType = tc.resolveTypeAnnotation(expr.ReturnType)
+	}
+	
+	// Perform type inference for parameters that need it first
+	if len(paramsNeedInference) > 0 {
+		for _, paramIndex := range paramsNeedInference {
+			param := expr.Parameters[paramIndex]
+			// Try to infer type from usage in the function body
+			inferredType := tc.inferParameterType(param.Name.Name, expr.Body)
+			if inferredType != UndefinedType {
+				paramTypes[paramIndex] = inferredType
+				// Update the parameter type in the symbol table
+				tc.resolver.UpdateType(param.Name.Name, inferredType)
+			} else {
+				// Default to int for numeric operations, or keep as undefined
+				paramTypes[paramIndex] = IntType
+				tc.resolver.UpdateType(param.Name.Name, IntType)
+			}
+		}
+	}
+	
+	// Check function body after parameter type inference
+	if expr.Body != nil {
+		switch body := expr.Body.(type) {
+		case *ast.BlockStatement:
+			tc.checkBlockStatement(body)
+			
+			// For arrow functions with expression bodies (wrapped in BlockStatement with ReturnStatement),
+			// we need to infer the return type from the return statement
+			if returnType == UndefinedType && len(body.Body) == 1 {
+				if returnStmt, ok := body.Body[0].(*ast.ReturnStatement); ok && returnStmt.Argument != nil {
+					returnType = tc.checkExpression(returnStmt.Argument)
+				}
+			}
+		case ast.Expression:
+			// For expression bodies, check the expression and use its type as return type
+			if returnType == UndefinedType {
+				returnType = tc.checkExpression(body)
+			} else {
+				// If return type is explicitly specified, check compatibility
+				exprType := tc.checkExpression(body)
+				if !returnType.Equals(exprType) {
+					suggestion := fmt.Sprintf("Change return type to '%s' or modify expression", exprType.String())
+					context := fmt.Sprintf("Expression returns '%s', but function expects '%s'", exprType.String(), returnType.String())
+					tc.addDetailedError(expr.Pos(),
+						"Arrow function expression type doesn't match declared return type",
+						TypeMismatchError,
+						suggestion,
+						context)
+				}
+			}
+		default:
+			// Handle other node types if needed
+			if returnType == UndefinedType {
+				returnType = UndefinedType
+			}
+		}
+	}
+	
+	// Create and return function type
+	funcType := &FunctionType{
+		Parameters: paramTypes,
+		ReturnType: returnType,
+		Variadic:   false,
+	}
+	return funcType
+}
+
 // checkBlockStatement type checks a block statement
 func (tc *TypeChecker) checkBlockStatement(stmt *ast.BlockStatement) {
 	tc.resolver.EnterScope()
@@ -614,6 +719,10 @@ func (tc *TypeChecker) resolveTypeAnnotation(annotation ast.TypeNode) Type {
 		switch t.Kind {
 		case lexer.NUMBER_T:
 			return FloatType
+		case lexer.INT_T:
+			return IntType
+		case lexer.FLOAT_T:
+			return FloatType
 		case lexer.STRING_T:
 			return StringType
 		case lexer.BOOLEAN_T:
@@ -698,4 +807,70 @@ func (tc *TypeChecker) GetErrors() []*TypeError {
 // SetStrictMode enables or disables strict type checking
 func (tc *TypeChecker) SetStrictMode(strict bool) {
 	tc.strictMode = strict
+}
+
+// inferParameterType attempts to infer the type of a parameter from its usage in the function body
+func (tc *TypeChecker) inferParameterType(paramName string, body ast.Node) Type {
+	// This is a simple implementation that looks for numeric operations
+	// In a full implementation, this would be much more sophisticated
+	
+	switch node := body.(type) {
+	case *ast.BlockStatement:
+		for _, stmt := range node.Body {
+			if returnStmt, ok := stmt.(*ast.ReturnStatement); ok && returnStmt.Argument != nil {
+				return tc.inferParameterTypeFromExpression(paramName, returnStmt.Argument)
+			}
+		}
+	case ast.Expression:
+		return tc.inferParameterTypeFromExpression(paramName, node)
+	}
+	
+	return UndefinedType
+}
+
+// inferParameterTypeFromExpression infers parameter type from expression usage
+func (tc *TypeChecker) inferParameterTypeFromExpression(paramName string, expr ast.Expression) Type {
+	switch e := expr.(type) {
+	case *ast.BinaryExpression:
+		// Check if the parameter is used in a binary expression
+		if tc.expressionUsesParameter(e.Left, paramName) || tc.expressionUsesParameter(e.Right, paramName) {
+			// For arithmetic operations, assume int
+			switch e.Operator.String() {
+			case "+", "-", "*", "/", "%":
+				return IntType
+			case "==", "!=", "<", ">", "<=", ">=":
+				return IntType // Comparison operations often use numbers
+			}
+		}
+	case *ast.Identifier:
+		if e.Name == paramName {
+			// Parameter used directly, can't infer much
+			return UndefinedType
+		}
+	}
+	
+	return UndefinedType
+}
+
+// expressionUsesParameter checks if an expression uses a specific parameter
+func (tc *TypeChecker) expressionUsesParameter(expr ast.Expression, paramName string) bool {
+	switch e := expr.(type) {
+	case *ast.Identifier:
+		return e.Name == paramName
+	case *ast.BinaryExpression:
+		return tc.expressionUsesParameter(e.Left, paramName) || tc.expressionUsesParameter(e.Right, paramName)
+	case *ast.UnaryExpression:
+		return tc.expressionUsesParameter(e.Operand, paramName)
+	case *ast.CallExpression:
+		if tc.expressionUsesParameter(e.Callee, paramName) {
+			return true
+		}
+		for _, arg := range e.Arguments {
+			if tc.expressionUsesParameter(arg, paramName) {
+				return true
+			}
+		}
+	}
+	
+	return false
 }

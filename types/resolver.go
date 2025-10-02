@@ -179,6 +179,15 @@ func (r *Resolver) Lookup(name string) (*Symbol, bool) {
 	return r.currentScope.Lookup(name)
 }
 
+// UpdateType updates the type of an existing symbol
+func (r *Resolver) UpdateType(name string, typ Type) error {
+	if symbol, exists := r.currentScope.Lookup(name); exists {
+		symbol.Type = typ
+		return nil
+	}
+	return fmt.Errorf("symbol '%s' not found", name)
+}
+
 // ResolveProgram resolves symbols in a program
 func (r *Resolver) ResolveProgram(program *ast.Program) error {
 	r.errors = nil

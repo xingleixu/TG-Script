@@ -116,8 +116,29 @@ func (p *Parser) parsePrefixExpression() ast.Expression {
 
 // parseGroupedExpression parses a grouped expression (parentheses).
 func (p *Parser) parseGroupedExpression() ast.Expression {
+	lparenPos := p.currentToken.Position
 	p.nextToken()
 
+	// Check if this might be arrow function parameters
+	if p.mightBeArrowFunctionParams() {
+		// Try to parse as arrow function parameters
+		params := p.parseArrowFunctionParameterList()
+		if params != nil && p.expectPeek(lexer.RPAREN) {
+			rparenPos := p.currentToken.Position
+			// Check if next token is '=>' to confirm this is arrow function params
+			if p.peekTokenIs(lexer.ARROW) {
+				return &ast.ArrowFunctionParams{
+					LParen:     lparenPos,
+					Parameters: params,
+					RParen:     rparenPos,
+				}
+			}
+		}
+		// If not arrow function params, reset and parse as regular expression
+		// This is a simplified approach - in a full implementation we'd need better backtracking
+	}
+
+	// Parse as regular grouped expression
 	exp := p.parseExpression(LOWEST)
 
 	if !p.expectPeek(lexer.RPAREN) {
@@ -658,3 +679,97 @@ func (p *Parser) parsePostfixDecrementExpression(left ast.Expression) ast.Expres
 
 
 // init registers all prefix and infix parse functions.
+
+// parseArrowFunctionExpression parses arrow function expressions
+// mightBeArrowFunctionParams checks if the current position might be arrow function parameters
+func (p *Parser) mightBeArrowFunctionParams() bool {
+	// Simple heuristic: if we see an identifier followed by ':' or ',' or ')', it might be parameters
+	if p.currentTokenIs(lexer.IDENT) {
+		return p.peekTokenIs(lexer.COLON) || p.peekTokenIs(lexer.COMMA) || p.peekTokenIs(lexer.RPAREN)
+	}
+	// Empty parameter list
+	if p.currentTokenIs(lexer.RPAREN) {
+		return true
+	}
+	return false
+}
+
+// parseArrowFunctionParameterList parses a list of arrow function parameters
+func (p *Parser) parseArrowFunctionParameterList() []*ast.Parameter {
+	var params []*ast.Parameter
+	
+	// Handle empty parameter list
+	if p.currentTokenIs(lexer.RPAREN) {
+		return params
+	}
+	
+	// Parse first parameter
+	param := p.parseParameter()
+	if param == nil {
+		return nil
+	}
+	params = append(params, param)
+	
+	// Parse remaining parameters
+	for p.peekTokenIs(lexer.COMMA) {
+		p.nextToken() // consume ','
+		p.nextToken() // move to next parameter
+		
+		param := p.parseParameter()
+		if param == nil {
+			return nil
+		}
+		params = append(params, param)
+	}
+	
+	return params
+}
+
+func (p *Parser) parseArrowFunctionExpression(left ast.Expression) ast.Expression {
+	arrow := &ast.ArrowFunctionExpression{
+		Arrow: p.currentToken.Position,
+	}
+
+	// Handle different parameter forms
+	switch leftExpr := left.(type) {
+	case *ast.Identifier:
+		// Single parameter without parentheses: x => x * 2
+		param := &ast.Parameter{
+			Name: leftExpr,
+		}
+		arrow.Parameters = []*ast.Parameter{param}
+	case *ast.ArrowFunctionParams:
+		// Parameters in parentheses: (x: int, y: int) => x + y
+		arrow.Parameters = leftExpr.Parameters
+		arrow.LParen = leftExpr.LParen
+		arrow.RParen = leftExpr.RParen
+	default:
+		// For now, we don't support other complex parameter forms
+		p.addErrorf("arrow function currently only supports identifier or parenthesized parameters: %T", left)
+		return nil
+	}
+
+	// Parse function body
+	p.nextToken() // move past '=>'
+	
+	// Arrow function body can be either an expression or a block statement
+	if p.currentTokenIs(lexer.LBRACE) {
+		arrow.Body = p.parseBlockStatement()
+	} else {
+		// Expression body - wrap in a return statement
+		expr := p.parseExpression(LOWEST)
+		if expr != nil {
+			returnStmt := &ast.ReturnStatement{
+				ReturnPos: p.currentToken.Position,
+				Argument:  expr,
+			}
+			arrow.Body = &ast.BlockStatement{
+				LBrace: p.currentToken.Position,
+				Body:   []ast.Statement{returnStmt},
+				RBrace: p.currentToken.Position,
+			}
+		}
+	}
+
+	return arrow
+}

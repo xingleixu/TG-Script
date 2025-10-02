@@ -1,0 +1,29 @@
+// 最终箭头函数验证测试 - 当前支持的特性
+
+// 1. 基本箭头函数 - 类型推断
+let add = (x, y) => x + y;
+console.log(add(5, 3)); // 应该输出 8
+
+// 2. 单参数箭头函数 - 类型推断  
+let double = x => x * 2;
+console.log(double(4)); // 应该输出 8
+
+// 3. 显式类型注解的箭头函数
+let typedMultiply = (a: int, b: int) => a * b;
+console.log(typedMultiply(3, 4)); // 应该输出 12
+
+// 4. 块语句体的箭头函数
+let complexCalc = (x, y) => {
+    let temp = x + y;
+    return temp * 2;
+};
+console.log(complexCalc(2, 3)); // 应该输出 10
+
+// 5. 多种运算的类型推断
+let subtract = (a, b) => a - b;
+let divide = (a, b) => a / b;
+let modulo = (a, b) => a % b;
+
+console.log(subtract(10, 3)); // 应该输出 7
+console.log(divide(15, 3)); // 应该输出 5
+console.log(modulo(10, 3)); // 应该输出 1
