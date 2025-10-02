@@ -16,6 +16,28 @@ TG-Script is a high-performance static-typed scripting language based on a TypeS
 - Compared to Tengo: 40% faster startup, 30% less memory usage, 2-3x execution speed improvement
 - 80% reduction in Go interop overhead
 
+## ✨ Language Features
+
+### Automatic Semicolon Insertion (ASI)
+
+TG-Script supports TypeScript-compatible automatic semicolon insertion, making semicolons optional in most cases:
+
+```typescript
+// Semicolons are optional
+let name = "TG-Script"
+let version = 1.0
+print("Hello, World!")
+
+// But required in for loops and same-line statements
+for (let i = 0; i < 10; i++) {  // semicolons required here
+    print(i)
+}
+
+let a = 1; let b = 2; print(a + b)  // semicolons required for same-line statements
+```
+
+For detailed ASI rules, see [docs/asi_rules.md](docs/asi_rules.md).
+
 ## 🚀 Quick Start
 
 ```bash

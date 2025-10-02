@@ -8,14 +8,14 @@ import (
 
 // Lexer represents the lexical analyzer
 type Lexer struct {
-	input        string    // the input source code
-	position     int       // current position in input (points to current char)
-	readPosition int       // current reading position in input (after current char)
-	ch           byte      // current char under examination
-	line         int       // current line number (1-based)
-	column       int       // current column number (1-based)
-	offset       int       // current byte offset (0-based)
-	errors       []string  // collection of lexer errors
+	input        string   // the input source code
+	position     int      // current position in input (points to current char)
+	readPosition int      // current reading position in input (after current char)
+	ch           byte     // current char under examination
+	line         int      // current line number (1-based)
+	column       int      // current column number (1-based)
+	offset       int      // current byte offset (0-based)
+	errors       []string // collection of lexer errors
 }
 
 // New creates a new lexer instance
@@ -40,7 +40,7 @@ func (l *Lexer) readChar() {
 	}
 	l.position = l.readPosition
 	l.readPosition++
-	
+
 	// Update line and column tracking
 	if l.ch == '\n' {
 		l.line++
@@ -115,7 +115,7 @@ func (l *Lexer) readMultiLineComment() string {
 	position := l.position
 	l.readChar() // consume '/'
 	l.readChar() // consume '*'
-	
+
 	for {
 		if l.ch == 0 {
 			l.addError("unterminated multi-line comment")

@@ -182,7 +182,11 @@ func (c *Compiler) PatchJump(pos int, target int) {
 	opcode := inst.GetOpCode()
 	a := inst.GetA()
 	
-	c.instructions[pos] = vm.CreateABx(opcode, a, target)
+	// Calculate relative offset from the instruction after the jump
+	offset := target - (pos + 1)
+	
+	// Create new instruction with the offset + BxOffset for signed Bx
+	c.instructions[pos] = vm.CreateABx(opcode, a, offset + vm.BxOffset)
 }
 
 // AddError adds an error to the error list
@@ -228,6 +232,10 @@ func (c *Compiler) compileStatement(stmt ast.Statement) error {
 		return c.compileVariableDeclaration(s)
 	case *ast.IfStatement:
 		return c.compileIfStatement(s)
+	case *ast.ForStatement:
+		return c.compileForStatement(s)
+	case *ast.WhileStatement:
+		return c.compileWhileStatement(s)
 	case *ast.ReturnStatement:
 		return c.compileReturnStatement(s)
 	case *ast.BlockStatement:
@@ -359,8 +367,12 @@ func (c *Compiler) compileExpression(expr ast.Expression, targetReg int) error {
 		return c.compileBooleanLiteral(e, targetReg)
 	case *ast.BinaryExpression:
 		return c.compileBinaryExpression(e, targetReg)
+	case *ast.UnaryExpression:
+		return c.compileUnaryExpression(e, targetReg)
 	case *ast.CallExpression:
 		return c.compileCallExpression(e, targetReg)
+	case *ast.AssignmentExpression:
+		return c.compileAssignmentExpression(e, targetReg)
 	default:
 		return fmt.Errorf("unsupported expression type: %T", expr)
 	}
@@ -412,6 +424,30 @@ func (c *Compiler) compileBooleanLiteral(expr *ast.BooleanLiteral, targetReg int
 }
 
 // compileBinaryExpression compiles a binary expression
+func (c *Compiler) compileUnaryExpression(expr *ast.UnaryExpression, targetReg int) error {
+	operandReg := c.AllocateRegister()
+	defer c.FreeRegister(operandReg)
+
+	if err := c.compileExpression(expr.Operand, operandReg); err != nil {
+		return err
+	}
+
+	switch expr.Operator.String() {
+	case "!":
+		c.Emit(vm.OpNot, targetReg, operandReg)
+	case "-":
+		// For negative numbers, we can use subtraction from 0
+		zeroReg := c.AllocateRegister()
+		defer c.FreeRegister(zeroReg)
+		c.Emit(vm.OpLoadK, zeroReg, c.AddConstant(vm.NewIntValue(0)))
+		c.Emit(vm.OpSub, targetReg, zeroReg, operandReg)
+	default:
+		return fmt.Errorf("unsupported unary operator: %s", expr.Operator.String())
+	}
+
+	return nil
+}
+
 func (c *Compiler) compileBinaryExpression(expr *ast.BinaryExpression, targetReg int) error {
 	// Compile operands
 	leftReg := c.AllocateRegister()
@@ -435,6 +471,8 @@ func (c *Compiler) compileBinaryExpression(expr *ast.BinaryExpression, targetReg
 		c.Emit(vm.OpMul, targetReg, leftReg, rightReg)
 	case "/":
 		c.Emit(vm.OpDiv, targetReg, leftReg, rightReg)
+	case "%":
+		c.Emit(vm.OpMod, targetReg, leftReg, rightReg)
 	case "==":
 		c.Emit(vm.OpEq, targetReg, leftReg, rightReg)
 	case "!=":
@@ -447,6 +485,10 @@ func (c *Compiler) compileBinaryExpression(expr *ast.BinaryExpression, targetReg
 		c.Emit(vm.OpGt, targetReg, leftReg, rightReg)
 	case ">=":
 		c.Emit(vm.OpGe, targetReg, leftReg, rightReg)
+	case "&&":
+		c.Emit(vm.OpAnd, targetReg, leftReg, rightReg)
+	case "||":
+		c.Emit(vm.OpOr, targetReg, leftReg, rightReg)
 	default:
 		return fmt.Errorf("unsupported binary operator: %s", expr.Operator.String())
 	}
@@ -475,13 +517,6 @@ func (c *Compiler) compileCallExpression(expr *ast.CallExpression, targetReg int
 		argRegs[i] = argReg
 	}
 	
-	// Emit call instruction
-	// OpCall format: R(A)..R(A+C-1) := R(A)(R(A+1)..R(A+B-1))
-	// A = target register (where result goes)
-	// B = number of arguments + 1
-	// C = number of return values + 1
-	c.Emit(vm.OpCall, targetReg, len(expr.Arguments)+1, 1)
-	
 	// Move function to target register
 	c.Emit(vm.OpMove, targetReg, funcReg)
 	
@@ -489,6 +524,137 @@ func (c *Compiler) compileCallExpression(expr *ast.CallExpression, targetReg int
 	for i, argReg := range argRegs {
 		c.Emit(vm.OpMove, targetReg+1+i, argReg)
 	}
+	
+	// Emit call instruction
+	// OpCall format: R(A)..R(A+C-1) := R(A)(R(A+1)..R(A+B-1))
+	// A = target register (where result goes)
+	// B = number of arguments + 1
+	// C = number of return values + 1
+	c.Emit(vm.OpCall, targetReg, len(expr.Arguments)+1, 1)
+	
+	return nil
+}
+
+// compileAssignmentExpression compiles an assignment expression
+func (c *Compiler) compileAssignmentExpression(expr *ast.AssignmentExpression, targetReg int) error {
+	// For now, only support simple assignment (=)
+	if expr.Operator.String() != "=" {
+		return fmt.Errorf("unsupported assignment operator: %s", expr.Operator.String())
+	}
+	
+	// Compile the right-hand side first
+	valueReg := c.AllocateRegister()
+	defer c.FreeRegister(valueReg)
+	
+	if err := c.compileExpression(expr.Right, valueReg); err != nil {
+		return err
+	}
+	
+	// Handle left-hand side assignment
+	if id, ok := expr.Left.(*ast.Identifier); ok {
+		// Simple variable assignment
+		symbol, exists := c.symbolTable.Resolve(id.Name)
+		if exists && symbol.Type == SymbolLocal {
+			// Local variable assignment
+			c.Emit(vm.OpMove, symbol.Register, valueReg)
+			c.Emit(vm.OpMove, targetReg, symbol.Register)
+		} else {
+			// Global variable assignment
+			constIndex := c.AddConstant(vm.NewStringValue(id.Name))
+			c.Emit(vm.OpSetGlobal, valueReg, constIndex)
+			c.Emit(vm.OpMove, targetReg, valueReg)
+		}
+		return nil
+	}
+	
+	return fmt.Errorf("unsupported assignment target: %T", expr.Left)
+}
+
+// compileForStatement compiles a for statement
+func (c *Compiler) compileForStatement(stmt *ast.ForStatement) error {
+	// Enter new scope for loop variables
+	c.symbolTable = NewSymbolTable(c.symbolTable)
+	defer func() {
+		c.symbolTable = c.symbolTable.parent
+	}()
+	
+	// Compile initialization if present
+	if stmt.Init != nil {
+		if err := c.compileStatement(stmt.Init); err != nil {
+			return err
+		}
+	}
+	
+	// Loop start position
+	loopStart := len(c.instructions)
+	
+	// Compile test condition if present
+	var jumpToEnd int
+	if stmt.Test != nil {
+		condReg := c.AllocateRegister()
+		if err := c.compileExpression(stmt.Test, condReg); err != nil {
+			return err
+		}
+		
+		// Test condition and jump if false
+		c.Emit(vm.OpTest, condReg)
+		jumpToEnd = c.Emit(vm.OpJmp, 0) // placeholder
+		c.FreeRegister(condReg)
+	}
+	
+	// Compile body
+	if err := c.compileStatement(stmt.Body); err != nil {
+		return err
+	}
+	
+	// Compile update if present
+	if stmt.Update != nil {
+		reg := c.AllocateRegister()
+		defer c.FreeRegister(reg)
+		if err := c.compileExpression(stmt.Update, reg); err != nil {
+			return err
+		}
+	}
+	
+	// Jump back to loop start
+	offset := loopStart - (len(c.instructions) + 1)
+	c.Emit(vm.OpJmp, offset + vm.BxOffset)
+	
+	// Patch jump to end if test condition exists
+	if stmt.Test != nil {
+		c.PatchJump(jumpToEnd, len(c.instructions))
+	}
+	
+	return nil
+}
+
+// compileWhileStatement compiles a while statement
+func (c *Compiler) compileWhileStatement(stmt *ast.WhileStatement) error {
+	// Loop start position
+	loopStart := len(c.instructions)
+	
+	// Compile test condition
+	condReg := c.AllocateRegister()
+	if err := c.compileExpression(stmt.Test, condReg); err != nil {
+		return err
+	}
+	
+	// Test condition and jump if false
+	c.Emit(vm.OpTest, condReg)
+	jumpToEnd := c.Emit(vm.OpJmp, 0) // placeholder
+	c.FreeRegister(condReg)
+	
+	// Compile body
+	if err := c.compileStatement(stmt.Body); err != nil {
+		return err
+	}
+	
+	// Jump back to loop start
+	offset := loopStart - (len(c.instructions) + 1)
+	c.Emit(vm.OpJmp, offset + vm.BxOffset)
+	
+	// Patch jump to end
+	c.PatchJump(jumpToEnd, len(c.instructions))
 	
 	return nil
 }

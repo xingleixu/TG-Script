@@ -293,6 +293,10 @@ func (vm *VM) executeOpCode(inst Instruction) error {
 		return vm.opGe(inst)
 	case OpNot:
 		return vm.opNot(inst)
+	case OpAnd:
+		return vm.opAnd(inst)
+	case OpOr:
+		return vm.opOr(inst)
 	case OpJmp:
 		return vm.opJmp(inst)
 	case OpTest:
@@ -487,67 +491,73 @@ func (vm *VM) opNeg(inst Instruction) error {
 }
 
 func (vm *VM) opEq(inst Instruction) error {
-	b, c := inst.GetB(), inst.GetC()
+	a, b, c := inst.GetA(), inst.GetB(), inst.GetC()
 	vb, vc := vm.GetRegister(b), vm.GetRegister(c)
 	
-	if vb.Equals(vc) {
-		vm.CurrentFrame.PC++ // skip next instruction
-	}
+	result := vb.Equals(vc)
+	vm.SetRegister(a, NewBoolValue(result))
 	
 	return nil
 }
 
 func (vm *VM) opNe(inst Instruction) error {
-	b, c := inst.GetB(), inst.GetC()
+	a, b, c := inst.GetA(), inst.GetB(), inst.GetC()
 	vb, vc := vm.GetRegister(b), vm.GetRegister(c)
 	
-	if !vb.Equals(vc) {
-		vm.CurrentFrame.PC++ // skip next instruction
-	}
+	result := !vb.Equals(vc)
+	vm.SetRegister(a, NewBoolValue(result))
 	
 	return nil
 }
 
 func (vm *VM) opLt(inst Instruction) error {
-	b, c := inst.GetB(), inst.GetC()
+	a, b, c := inst.GetA(), inst.GetB(), inst.GetC()
 	vb, vc := vm.GetRegister(b), vm.GetRegister(c)
 	
-	if cmp, ok := vb.Compare(vc); ok && cmp < 0 {
-		vm.CurrentFrame.PC++ // skip next instruction
+	result := false
+	if cmp, ok := vb.Compare(vc); ok {
+		result = cmp < 0
 	}
+	vm.SetRegister(a, NewBoolValue(result))
 	
 	return nil
 }
 
 func (vm *VM) opLe(inst Instruction) error {
-	b, c := inst.GetB(), inst.GetC()
+	a, b, c := inst.GetA(), inst.GetB(), inst.GetC()
 	vb, vc := vm.GetRegister(b), vm.GetRegister(c)
 	
-	if cmp, ok := vb.Compare(vc); ok && cmp <= 0 {
-		vm.CurrentFrame.PC++ // skip next instruction
+	result := false
+	if cmp, ok := vb.Compare(vc); ok {
+		result = cmp <= 0
 	}
+	vm.SetRegister(a, NewBoolValue(result))
 	
 	return nil
 }
 
 func (vm *VM) opGt(inst Instruction) error {
-	b, c := inst.GetB(), inst.GetC()
+	a, b, c := inst.GetA(), inst.GetB(), inst.GetC()
 	vb, vc := vm.GetRegister(b), vm.GetRegister(c)
 	
-	if cmp, ok := vb.Compare(vc); ok && cmp > 0 {
-		vm.CurrentFrame.PC++ // skip next instruction
+	result := false
+	if cmp, ok := vb.Compare(vc); ok {
+		result = cmp > 0
 	}
+	vm.SetRegister(a, NewBoolValue(result))
 	
 	return nil
 }
 
 func (vm *VM) opGe(inst Instruction) error {
-	b, c := inst.GetB(), inst.GetC()
+	a, b, c := inst.GetA(), inst.GetB(), inst.GetC()
 	vb, vc := vm.GetRegister(b), vm.GetRegister(c)
 	
-	if cmp, ok := vb.Compare(vc); ok && cmp >= 0 {
-		vm.CurrentFrame.PC++ // skip next instruction
+	result := false
+	if cmp, ok := vb.Compare(vc); ok {
+		result = cmp >= 0
 	}
+	vm.SetRegister(a, NewBoolValue(result))
 	
 	return nil
 }
@@ -739,5 +749,27 @@ func (vm *VM) opSetGlobal(inst Instruction) error {
 	value := vm.GetRegister(a)
 	
 	vm.SetGlobal(name, value)
+	return nil
+}
+
+func (vm *VM) opAnd(inst Instruction) error {
+	a, b, c := inst.GetA(), inst.GetB(), inst.GetC()
+	vb, vc := vm.GetRegister(b), vm.GetRegister(c)
+	
+	// Logical AND: result is true only if both operands are true
+	result := vb.ToBool() && vc.ToBool()
+	vm.SetRegister(a, NewBoolValue(result))
+	
+	return nil
+}
+
+func (vm *VM) opOr(inst Instruction) error {
+	a, b, c := inst.GetA(), inst.GetB(), inst.GetC()
+	vb, vc := vm.GetRegister(b), vm.GetRegister(c)
+	
+	// Logical OR: result is true if either operand is true
+	result := vb.ToBool() || vc.ToBool()
+	vm.SetRegister(a, NewBoolValue(result))
+	
 	return nil
 }

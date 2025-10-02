@@ -1,0 +1,39 @@
+// 测试基础变量声明和赋值
+// Test basic variable declarations and assignments
+
+// 整数变量
+let a = 42
+let b = 100
+let c = 5
+
+// 字符串变量
+let name = "TG-Script"
+let message = "Hello, World!"
+
+// 布尔变量
+let isTrue = true
+let isFalse = false
+
+// 打印所有变量
+print("整数变量:")
+print("a =", a)
+print("b =", b)
+print("c =", c)
+
+print("字符串变量:")
+print("name =", name)
+print("message =", message)
+
+print("布尔变量:")
+print("isTrue =", isTrue)
+print("isFalse =", isFalse)
+
+// 变量重新赋值
+a = 99
+name = "Updated"
+isTrue = false
+
+print("重新赋值后:")
+print("a =", a)
+print("name =", name)
+print("isTrue =", isTrue)

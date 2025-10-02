@@ -74,19 +74,19 @@ const (
 	GE        // >=
 
 	// Assignment operators
-	ASSIGN          // =
-	ADD_ASSIGN      // +=
-	SUB_ASSIGN      // -=
-	MUL_ASSIGN      // *=
-	DIV_ASSIGN      // /=
-	MOD_ASSIGN      // %=
-	POW_ASSIGN      // **=
-	BIT_AND_ASSIGN  // &=
-	BIT_OR_ASSIGN   // |=
-	BIT_XOR_ASSIGN  // ^=
-	LSHIFT_ASSIGN   // <<=
-	RSHIFT_ASSIGN   // >>=
-	URSHIFT_ASSIGN  // >>>=
+	ASSIGN         // =
+	ADD_ASSIGN     // +=
+	SUB_ASSIGN     // -=
+	MUL_ASSIGN     // *=
+	DIV_ASSIGN     // /=
+	MOD_ASSIGN     // %=
+	POW_ASSIGN     // **=
+	BIT_AND_ASSIGN // &=
+	BIT_OR_ASSIGN  // |=
+	BIT_XOR_ASSIGN // ^=
+	LSHIFT_ASSIGN  // <<=
+	RSHIFT_ASSIGN  // >>=
+	URSHIFT_ASSIGN // >>>=
 
 	// Increment/Decrement
 	INCREMENT // ++
@@ -99,25 +99,25 @@ const (
 	AS         // as (type assertion)
 
 	// Other operators
-	QUESTION    // ? (ternary operator)
-	NULLISH     // ?? (nullish coalescing)
-	OPTIONAL    // ?. (optional chaining)
-	SPREAD      // ... (spread operator)
+	QUESTION // ? (ternary operator)
+	NULLISH  // ?? (nullish coalescing)
+	OPTIONAL // ?. (optional chaining)
+	SPREAD   // ... (spread operator)
 	operator_end
 
 	// Delimiters
 	delimiter_beg
-	LPAREN     // (
-	RPAREN     // )
-	LBRACE     // {
-	RBRACE     // }
-	LBRACKET   // [
-	RBRACKET   // ]
-	SEMICOLON  // ;
-	COMMA      // ,
-	DOT        // .
-	COLON      // :
-	ARROW      // => (arrow function)
+	LPAREN    // (
+	RPAREN    // )
+	LBRACE    // {
+	RBRACE    // }
+	LBRACKET  // [
+	RBRACKET  // ]
+	SEMICOLON // ;
+	COMMA     // ,
+	DOT       // .
+	COLON     // :
+	ARROW     // => (arrow function)
 	delimiter_end
 
 	// Keywords
@@ -173,15 +173,15 @@ const (
 	READONLY  // readonly
 
 	// Type keywords
-	ANY      // any
-	UNKNOWN  // unknown
-	NEVER    // never
-	VOID     // void
-	OBJECT   // object
-	STRING_T // string (type)
-	NUMBER_T // number (type)
+	ANY       // any
+	UNKNOWN   // unknown
+	NEVER     // never
+	VOID      // void
+	OBJECT    // object
+	STRING_T  // string (type)
+	NUMBER_T  // number (type)
 	BOOLEAN_T // boolean (type)
-	SYMBOL   // symbol
+	SYMBOL    // symbol
 
 	// TG-Script optimized types
 	INT_T   // int (optimized integer type)
@@ -218,53 +218,53 @@ var tokenNames = [...]string{
 	REGEX:     "REGEX",
 
 	// Operators
-	ADD:             "+",
-	SUB:             "-",
-	MUL:             "*",
-	DIV:             "/",
-	MOD:             "%",
-	POW:             "**",
-	BIT_AND:         "&",
-	BIT_OR:          "|",
-	BIT_XOR:         "^",
-	BIT_NOT:         "~",
-	BIT_LSHIFT:      "<<",
-	BIT_RSHIFT:      ">>",
-	BIT_URSHIFT:     ">>>",
-	LOGICAL_AND:     "&&",
-	LOGICAL_OR:      "||",
-	LOGICAL_NOT:     "!",
-	EQ:              "==",
-	NE:              "!=",
-	STRICT_EQ:       "===",
-	STRICT_NE:       "!==",
-	LT:              "<",
-	LE:              "<=",
-	GT:              ">",
-	GE:              ">=",
-	ASSIGN:          "=",
-	ADD_ASSIGN:      "+=",
-	SUB_ASSIGN:      "-=",
-	MUL_ASSIGN:      "*=",
-	DIV_ASSIGN:      "/=",
-	MOD_ASSIGN:      "%=",
-	POW_ASSIGN:      "**=",
-	BIT_AND_ASSIGN:  "&=",
-	BIT_OR_ASSIGN:   "|=",
-	BIT_XOR_ASSIGN:  "^=",
-	LSHIFT_ASSIGN:   "<<=",
-	RSHIFT_ASSIGN:   ">>=",
-	URSHIFT_ASSIGN:  ">>>=",
-	INCREMENT:       "++",
-	DECREMENT:       "--",
-	TYPEOF:          "typeof",
-	INSTANCEOF:      "instanceof",
-	IN:              "in",
-	AS:              "as",
-	QUESTION:        "?",
-	NULLISH:         "??",
-	OPTIONAL:        "?.",
-	SPREAD:          "...",
+	ADD:            "+",
+	SUB:            "-",
+	MUL:            "*",
+	DIV:            "/",
+	MOD:            "%",
+	POW:            "**",
+	BIT_AND:        "&",
+	BIT_OR:         "|",
+	BIT_XOR:        "^",
+	BIT_NOT:        "~",
+	BIT_LSHIFT:     "<<",
+	BIT_RSHIFT:     ">>",
+	BIT_URSHIFT:    ">>>",
+	LOGICAL_AND:    "&&",
+	LOGICAL_OR:     "||",
+	LOGICAL_NOT:    "!",
+	EQ:             "==",
+	NE:             "!=",
+	STRICT_EQ:      "===",
+	STRICT_NE:      "!==",
+	LT:             "<",
+	LE:             "<=",
+	GT:             ">",
+	GE:             ">=",
+	ASSIGN:         "=",
+	ADD_ASSIGN:     "+=",
+	SUB_ASSIGN:     "-=",
+	MUL_ASSIGN:     "*=",
+	DIV_ASSIGN:     "/=",
+	MOD_ASSIGN:     "%=",
+	POW_ASSIGN:     "**=",
+	BIT_AND_ASSIGN: "&=",
+	BIT_OR_ASSIGN:  "|=",
+	BIT_XOR_ASSIGN: "^=",
+	LSHIFT_ASSIGN:  "<<=",
+	RSHIFT_ASSIGN:  ">>=",
+	URSHIFT_ASSIGN: ">>>=",
+	INCREMENT:      "++",
+	DECREMENT:      "--",
+	TYPEOF:         "typeof",
+	INSTANCEOF:     "instanceof",
+	IN:             "in",
+	AS:             "as",
+	QUESTION:       "?",
+	NULLISH:        "??",
+	OPTIONAL:       "?.",
+	SPREAD:         "...",
 
 	// Delimiters
 	LPAREN:    "(",
@@ -440,13 +440,13 @@ func init() {
 	for i := keyword_beg + 1; i < keyword_end; i++ {
 		keywords[tokenNames[i]] = i
 	}
-	
+
 	// Add special literal keywords
 	keywords["true"] = BOOLEAN
 	keywords["false"] = BOOLEAN
 	keywords["null"] = NULL
 	keywords["undefined"] = UNDEFINED
-	
+
 	// Add operator keywords (these are operators but should be recognized as keywords in lookup)
 	keywords["typeof"] = TYPEOF
 	keywords["instanceof"] = INSTANCEOF

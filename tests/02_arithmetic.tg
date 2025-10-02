@@ -1,0 +1,44 @@
+// 测试算术运算符
+// Test arithmetic operators
+
+let a = 10
+let b = 3
+let c = 15
+let d = 4
+
+print("整数算术运算:")
+print("a =", a, ", b =", b)
+
+// 基本算术运算
+print("a + b =", a + b)
+print("a - b =", a - b)
+print("a * b =", a * b)
+print("a / b =", a / b)
+print("a % b =", a % b)
+
+print("更多算术运算:")
+print("c =", c, ", d =", d)
+
+print("c + d =", c + d)
+print("c - d =", c - d)
+print("c * d =", c * d)
+print("c / d =", c / d)
+print("c % d =", c % d)
+
+// 复杂表达式
+let result1 = a + b * 2
+let result2 = (a + b) * 2
+let result3 = a * b + c / d
+
+print("复杂表达式:")
+print("a + b * 2 =", result1)
+print("(a + b) * 2 =", result2)
+print("a * b + c / d =", result3)
+
+// 运算符优先级测试
+let result4 = a + b * c - d
+let result5 = a * b + c * d
+
+print("运算符优先级:")
+print("a + b * c - d =", result4)
+print("a * b + c * d =", result5)

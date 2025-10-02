@@ -161,6 +161,46 @@ func (p *Parser) skipSemicolon() {
 	}
 }
 
+// canInsertSemicolon checks if a semicolon can be automatically inserted
+// according to TypeScript/JavaScript ASI rules.
+func (p *Parser) canInsertSemicolon() bool {
+	// ASI rules:
+	// 1. At the end of input (EOF)
+	// 2. Before a closing brace '}'
+	// 3. After a line terminator (newline)
+	// 4. Before certain restricted tokens (return, break, continue, etc.)
+	
+	if p.peekToken.Type == lexer.EOF {
+		return true
+	}
+	
+	if p.peekToken.Type == lexer.RBRACE {
+		return true
+	}
+	
+	// Check if there's a line break between current and peek token
+	if p.currentToken.Position.Line < p.peekToken.Position.Line {
+		return true
+	}
+	
+	return false
+}
+
+// expectSemicolonOrASI expects a semicolon or allows automatic semicolon insertion
+func (p *Parser) expectSemicolonOrASI() bool {
+	if p.peekTokenIs(lexer.SEMICOLON) {
+		p.nextToken()
+		return true
+	}
+	
+	if p.canInsertSemicolon() {
+		return true
+	}
+	
+	p.addErrorf("expected ';' or line break, got %s", p.peekToken.Type)
+	return false
+}
+
 // ============================================================================
 // PRECEDENCE HANDLING
 // ============================================================================

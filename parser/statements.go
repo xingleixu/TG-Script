@@ -15,9 +15,13 @@ func (p *Parser) parseExpressionStatement() ast.Statement {
 		Expression: p.parseExpression(LOWEST),
 	}
 
+	// Use ASI logic for optional semicolon
 	if p.peekTokenIs(lexer.SEMICOLON) {
 		p.nextToken()
 		stmt.Semicolon = p.currentToken.Position
+	} else if !p.canInsertSemicolon() {
+		// Only report error if ASI is not applicable
+		p.addErrorf("expected ';' or line break after expression, got %s", p.peekToken.Type)
 	}
 
 	return stmt
@@ -81,9 +85,13 @@ func (p *Parser) parseVariableDeclaration() ast.Statement {
 		}
 	}
 
+	// Use ASI logic for optional semicolon
 	if p.peekTokenIs(lexer.SEMICOLON) {
 		p.nextToken()
 		stmt.Semicolon = p.currentToken.Position
+	} else if !p.canInsertSemicolon() {
+		// Only report error if ASI is not applicable
+		p.addErrorf("expected ';' or line break after variable declaration, got %s", p.peekToken.Type)
 	}
 
 	return stmt
@@ -324,6 +332,12 @@ func (p *Parser) parseReturnStatement() ast.Statement {
 		ReturnPos: p.currentToken.Position,
 	}
 
+	// Check for ASI after return keyword (restricted production)
+	if p.canInsertSemicolon() {
+		// Return without argument due to ASI
+		return stmt
+	}
+
 	if p.peekTokenIs(lexer.SEMICOLON) {
 		p.nextToken()
 		stmt.Semicolon = p.currentToken.Position
@@ -333,9 +347,13 @@ func (p *Parser) parseReturnStatement() ast.Statement {
 	p.nextToken()
 	stmt.Argument = p.parseExpression(LOWEST)
 
+	// Use ASI logic for optional semicolon
 	if p.peekTokenIs(lexer.SEMICOLON) {
 		p.nextToken()
 		stmt.Semicolon = p.currentToken.Position
+	} else if !p.canInsertSemicolon() {
+		// Only report error if ASI is not applicable
+		p.addErrorf("expected ';' or line break after return statement, got %s", p.peekToken.Type)
 	}
 
 	return stmt
@@ -347,14 +365,19 @@ func (p *Parser) parseBreakStatement() ast.Statement {
 		BreakPos: p.currentToken.Position,
 	}
 
-	if p.peekTokenIs(lexer.IDENT) {
+	// Check for ASI after break keyword (restricted production)
+	if !p.canInsertSemicolon() && p.peekTokenIs(lexer.IDENT) {
 		p.nextToken()
 		stmt.Label = p.parseIdentifier()
 	}
 
+	// Use ASI logic for optional semicolon
 	if p.peekTokenIs(lexer.SEMICOLON) {
 		p.nextToken()
 		stmt.Semicolon = p.currentToken.Position
+	} else if !p.canInsertSemicolon() {
+		// Only report error if ASI is not applicable
+		p.addErrorf("expected ';' or line break after break statement, got %s", p.peekToken.Type)
 	}
 
 	return stmt
@@ -366,14 +389,19 @@ func (p *Parser) parseContinueStatement() ast.Statement {
 		ContinuePos: p.currentToken.Position,
 	}
 
-	if p.peekTokenIs(lexer.IDENT) {
+	// Check for ASI after continue keyword (restricted production)
+	if !p.canInsertSemicolon() && p.peekTokenIs(lexer.IDENT) {
 		p.nextToken()
 		stmt.Label = p.parseIdentifier()
 	}
 
+	// Use ASI logic for optional semicolon
 	if p.peekTokenIs(lexer.SEMICOLON) {
 		p.nextToken()
 		stmt.Semicolon = p.currentToken.Position
+	} else if !p.canInsertSemicolon() {
+		// Only report error if ASI is not applicable
+		p.addErrorf("expected ';' or line break after continue statement, got %s", p.peekToken.Type)
 	}
 
 	return stmt

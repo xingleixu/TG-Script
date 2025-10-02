@@ -1,0 +1,97 @@
+// 测试条件语句
+// Test conditional statements
+
+let score = 85
+let age = 20
+let hasLicense = true
+
+print("条件语句测试:")
+print("score =", score, ", age =", age, ", hasLicense =", hasLicense)
+
+// 简单 if 语句
+print("简单 if 语句:")
+if (score >= 90) {
+    print("优秀!")
+}
+
+if (score >= 60) {
+    print("及格了!")
+}
+
+// if-else 语句
+print("if-else 语句:")
+if (score >= 90) {
+    print("成绩: 优秀")
+} else {
+    print("成绩: 良好或以下")
+}
+
+// if-else if-else 语句
+print("if-else if-else 语句:")
+if (score >= 90) {
+    print("等级: A")
+} else if (score >= 80) {
+    print("等级: B")
+} else if (score >= 70) {
+    print("等级: C")
+} else if (score >= 60) {
+    print("等级: D")
+} else {
+    print("等级: F")
+}
+
+// 嵌套条件语句
+print("嵌套条件语句:")
+if (age >= 18) {
+    print("成年人")
+    if (hasLicense) {
+        print("可以开车")
+    } else {
+        print("需要考驾照")
+    }
+} else {
+    print("未成年人")
+    if (age >= 16) {
+        print("可以学习驾驶")
+    } else {
+        print("太小了，不能开车")
+    }
+}
+
+// 复杂条件表达式
+print("复杂条件表达式:")
+if (age >= 18 && hasLicense) {
+    print("可以独立驾驶")
+} else if (age >= 16 && !hasLicense) {
+    print("可以学习驾驶")
+} else {
+    print("不能驾驶")
+}
+
+// 三元运算符（如果支持）
+// let result = score >= 60 ? "通过" : "不通过"
+// print("三元运算符结果:", result)
+
+// 不同类型的条件判断
+let num = 0
+let str = ""
+let bool = false
+
+print("不同类型的条件判断:")
+if (num) {
+    print("num 为真")
+} else {
+    print("num 为假")
+}
+
+if (str) {
+    print("str 为真")
+} else {
+    print("str 为假")
+}
+
+if (bool) {
+    print("bool 为真")
+} else {
+    print("bool 为假")
+}
