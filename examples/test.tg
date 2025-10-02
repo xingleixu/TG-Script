@@ -1,0 +1,6 @@
+// Simple test script for TG-Script
+let x = 42;
+let y = 10;
+let result = x + y;
+print("Hello from TG-Script!");
+print("Result:", result);

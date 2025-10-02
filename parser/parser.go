@@ -102,6 +102,11 @@ func New(l *lexer.Lexer) *Parser {
 func (p *Parser) nextToken() {
 	p.currentToken = p.peekToken
 	p.peekToken = p.lexer.NextToken()
+	
+	// Skip comments
+	for p.peekToken.Type == lexer.COMMENT {
+		p.peekToken = p.lexer.NextToken()
+	}
 }
 
 // Errors returns the list of parsing errors.

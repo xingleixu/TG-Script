@@ -2,7 +2,14 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
+	"strings"
+
+	"github.com/xingleixu/TG-Script/compiler"
+	"github.com/xingleixu/TG-Script/lexer"
+	"github.com/xingleixu/TG-Script/parser"
+	"github.com/xingleixu/TG-Script/vm"
 )
 
 const version = "0.1.0"
@@ -71,9 +78,70 @@ func handleRun(args []string) {
 	}
 	
 	filename := args[0]
-	fmt.Printf("Running TG-Script file: %s\n", filename)
-	// TODO: Implement script execution logic
-	fmt.Println("Note: Run functionality not yet implemented")
+	
+	// Check file extension
+	if !strings.HasSuffix(filename, ".tg") {
+		fmt.Printf("Error: File must have .tg extension, got: %s\n", filename)
+		os.Exit(1)
+	}
+	
+	// Check if file exists
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		fmt.Printf("Error: File not found: %s\n", filename)
+		os.Exit(1)
+	}
+	
+	// Read source code
+	source, err := ioutil.ReadFile(filename)
+	if err != nil {
+		fmt.Printf("Error reading file %s: %v\n", filename, err)
+		os.Exit(1)
+	}
+	
+	// Execute the script
+	if err := executeScript(string(source), filename); err != nil {
+		fmt.Printf("Error executing script: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+func executeScript(source, filename string) error {
+	// Lexical analysis
+	l := lexer.New(source)
+	
+	// Parse
+	p := parser.New(l)
+	program := p.ParseProgram()
+	
+	// Check for parser errors
+	if errors := p.Errors(); len(errors) > 0 {
+		fmt.Printf("Parser errors in %s:\n", filename)
+		for _, err := range errors {
+			fmt.Printf("  %s\n", err)
+		}
+		return fmt.Errorf("parsing failed")
+	}
+	
+	// Compile
+	function, err := compiler.CompileFunction(program)
+	if err != nil {
+		return fmt.Errorf("compilation failed: %v", err)
+	}
+	
+	// Execute
+	machine := vm.NewVM()
+	closure := vm.NewClosure(function)
+	result, err := machine.Execute(closure, []vm.Value{})
+	if err != nil {
+		return fmt.Errorf("execution failed: %v", err)
+	}
+	
+	// Print result if it's not nil
+	if !result.IsNil() {
+		fmt.Printf("Result: %v\n", result)
+	}
+	
+	return nil
 }
 
 func handleCompile(args []string) {
