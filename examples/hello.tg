@@ -1,0 +1,76 @@
+// TG-Script example program - TypeScript compatible syntax
+// Demonstrates syntax features based on TypeScript subset
+
+// Variable declarations and type annotations (TypeScript style)
+let message: string = "Hello, TG-Script!"
+let count: int = 42                    // Optimization: use int instead of number
+let pi: float = 3.14159               // Optimization: use float instead of number
+const version: string = "1.0.0"
+
+// Function definition (TypeScript style)
+function greet(name: string): string {
+    return "Hello, " + name + "!"
+}
+
+// Interface definition (TypeScript compatible)
+interface Person {
+    name: string
+    age: int
+}
+
+// Class definition (TypeScript compatible)
+class Student implements Person {
+    name: string
+    age: int
+    grade: int
+    
+    constructor(name: string, age: int, grade: int) {
+        this.name = name
+        this.age = age
+        this.grade = grade
+    }
+    
+    introduce(): string {
+        return `I'm ${this.name}, ${this.age} years old, grade ${this.grade}.`
+    }
+    
+    study(subject: string): void {
+        console.log(`${this.name} is studying ${subject}`)
+    }
+}
+
+// Generic function (TypeScript compatible)
+function identity<T>(arg: T): T {
+    return arg
+}
+
+// Main program
+function main(): void {
+    // Basic output
+    console.log(message)
+    
+    // Function call
+    let greeting: string = greet("World")
+    console.log(greeting)
+    
+    // Class instantiation and usage
+    let student: Student = new Student("Alice", 20, 3)
+    console.log(student.introduce())
+    student.study("TypeScript")
+    
+    // Generic usage
+    let num: int = identity<int>(42)
+    let str: string = identity<string>("Hello")
+    
+    // Control flow (TypeScript style)
+    for (let i: int = 0; i < count; i++) {
+        if (i % 10 === 0) {
+            console.log(`Count: ${i}`)
+        }
+    }
+    
+    // Array operations (TypeScript compatible)
+    let numbers: int[] = [1, 2, 3, 4, 5]
+    let doubled: int[] = numbers.map(x => x * 2)
+    console.log("Doubled:", doubled)
+}
