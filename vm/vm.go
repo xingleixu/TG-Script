@@ -134,7 +134,17 @@ func (vm *VM) GetRegister(index int) Value {
 	if index < 0 || index >= MaxRegisters {
 		return NilValue
 	}
-	return vm.Registers[index]
+	
+	// Calculate actual register index based on current frame's base register
+	actualIndex := index
+	if vm.CurrentFrame != nil {
+		actualIndex = vm.CurrentFrame.BaseReg + index
+		if actualIndex >= MaxRegisters {
+			return NilValue
+		}
+	}
+	
+	return vm.Registers[actualIndex]
 }
 
 // SetRegister sets a register value
@@ -142,7 +152,17 @@ func (vm *VM) SetRegister(index int, value Value) bool {
 	if index < 0 || index >= MaxRegisters {
 		return false
 	}
-	vm.Registers[index] = value
+	
+	// Calculate actual register index based on current frame's base register
+	actualIndex := index
+	if vm.CurrentFrame != nil {
+		actualIndex = vm.CurrentFrame.BaseReg + index
+		if actualIndex >= MaxRegisters {
+			return false
+		}
+	}
+	
+	vm.Registers[actualIndex] = value
 	return true
 }
 
@@ -611,8 +631,46 @@ func (vm *VM) opCall(inst Instruction) error {
 			vm.SetRegister(a, result)
 		}
 	} else if fn.Type == TypeFunction {
-		// TODO: Implement user function calls
-		return NewRuntimeError("user function calls not yet implemented")
+		// User-defined function call
+		function := fn.Data.(*Function)
+		
+		// Create closure for the function
+		closure := NewClosure(function)
+		
+		// Check argument count
+		if len(args) < function.NumParams {
+			return NewRuntimeError("function '%s' expects %d arguments, got %d", 
+				function.Name, function.NumParams, len(args))
+		}
+		
+		// Push new call frame
+		returnAddr := -1
+		if c > 0 {
+			returnAddr = a
+		}
+		
+		// Calculate base register for new frame
+		// Each frame needs its own register space
+		newBaseReg := 0
+		if vm.CurrentFrame != nil {
+			newBaseReg = vm.CurrentFrame.BaseReg + vm.CurrentFrame.NumRegs
+		}
+		
+		if err := vm.PushFrame(closure, newBaseReg, function.NumLocals, returnAddr, c); err != nil {
+			return err
+		}
+		
+		// Copy arguments to registers
+		for i, arg := range args {
+			if i < function.NumParams {
+				vm.SetRegister(i, arg)
+			}
+		}
+		
+		// Initialize remaining parameters to nil
+		for i := len(args); i < function.NumParams; i++ {
+			vm.SetRegister(i, NilValue)
+		}
 	} else {
 		return NewRuntimeError("attempt to call %s value", fn.TypeName())
 	}
@@ -623,19 +681,23 @@ func (vm *VM) opCall(inst Instruction) error {
 func (vm *VM) opReturn(inst Instruction) error {
 	a, b := inst.GetA(), inst.GetB()
 	
-	// Copy return values
+	// Get return value before popping frame
+	var returnValue Value = NilValue
 	if b > 0 {
-		for i := 0; i < b; i++ {
-			// TODO: Handle multiple return values
-			if i == 0 && vm.CurrentFrame.ReturnAddr >= 0 {
-				vm.SetRegister(vm.CurrentFrame.ReturnAddr, vm.GetRegister(a+i))
-			}
-		}
+		returnValue = vm.GetRegister(a)
 	}
+	
+	// Store return address before popping frame
+	returnAddr := vm.CurrentFrame.ReturnAddr
 	
 	// Pop frame
 	if err := vm.PopFrame(); err != nil {
 		return err
+	}
+	
+	// Copy return value to caller's frame
+	if b > 0 && returnAddr >= 0 {
+		vm.SetRegister(returnAddr, returnValue)
 	}
 	
 	// If no more frames, stop execution

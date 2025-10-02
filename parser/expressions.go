@@ -119,8 +119,29 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 	lparenPos := p.currentToken.Position
 	p.nextToken()
 
-	// Check if this might be arrow function parameters
+	// Handle empty parentheses for arrow functions: () => expr
+	if p.currentTokenIs(lexer.RPAREN) {
+		rparenPos := p.currentToken.Position
+		// Check if next token is '=>' to confirm this is arrow function params
+		if p.peekTokenIs(lexer.ARROW) {
+			return &ast.ArrowFunctionParams{
+				LParen:     lparenPos,
+				Parameters: []*ast.Parameter{}, // empty parameter list
+				RParen:     rparenPos,
+			}
+		}
+		// If not arrow function, this is an error - empty parentheses without arrow
+		p.addErrorf("unexpected token %s", p.currentToken.Type)
+		return nil
+	}
+
+	// Try to parse as arrow function parameters first
 	if p.mightBeArrowFunctionParams() {
+		// Save current position for potential backtracking
+		savedCurrentToken := p.currentToken
+		savedPeekToken := p.peekToken
+		savedErrors := len(p.errors)
+
 		// Try to parse as arrow function parameters
 		params := p.parseArrowFunctionParameterList()
 		if params != nil && p.expectPeek(lexer.RPAREN) {
@@ -134,8 +155,12 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 				}
 			}
 		}
-		// If not arrow function params, reset and parse as regular expression
-		// This is a simplified approach - in a full implementation we'd need better backtracking
+
+		// If not arrow function params, restore state and parse as regular expression
+		p.currentToken = savedCurrentToken
+		p.peekToken = savedPeekToken
+		// Remove any errors added during failed arrow function parsing
+		p.errors = p.errors[:savedErrors]
 	}
 
 	// Parse as regular grouped expression

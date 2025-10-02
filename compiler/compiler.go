@@ -13,6 +13,8 @@ type Compiler struct {
 	symbolTable  *SymbolTable
 	nextRegister int
 	maxRegisters int
+	freeRegisters []int  // Stack of free registers
+	variableRegisters map[int]bool  // Track registers used by variables
 	constants    []vm.Value
 	instructions []vm.Instruction
 	errors       []error
@@ -46,13 +48,15 @@ const (
 // NewCompiler creates a new compiler
 func NewCompiler() *Compiler {
 	return &Compiler{
-		function:     vm.NewFunction("main"),
-		symbolTable:  NewSymbolTable(nil),
-		nextRegister: 0,
-		maxRegisters: 0,
-		constants:    make([]vm.Value, 0),
-		instructions: make([]vm.Instruction, 0),
-		errors:       make([]error, 0),
+		function:          vm.NewFunction("main"),
+		symbolTable:       NewSymbolTable(nil),
+		nextRegister:      0,
+		maxRegisters:      0,
+		freeRegisters:     make([]int, 0),
+		variableRegisters: make(map[int]bool),
+		constants:         make([]vm.Value, 0),
+		instructions:      make([]vm.Instruction, 0),
+		errors:            make([]error, 0),
 	}
 }
 
@@ -113,6 +117,14 @@ func (st *SymbolTable) Resolve(name string) (*Symbol, bool) {
 
 // AllocateRegister allocates a new register
 func (c *Compiler) AllocateRegister() int {
+	// Try to reuse a free register first
+	if len(c.freeRegisters) > 0 {
+		reg := c.freeRegisters[len(c.freeRegisters)-1]
+		c.freeRegisters = c.freeRegisters[:len(c.freeRegisters)-1]
+		return reg
+	}
+	
+	// Allocate a new register
 	reg := c.nextRegister
 	c.nextRegister++
 	if c.nextRegister > c.maxRegisters {
@@ -121,9 +133,21 @@ func (c *Compiler) AllocateRegister() int {
 	return reg
 }
 
-// FreeRegister frees a register (simplified implementation)
+// FreeRegister frees a register
 func (c *Compiler) FreeRegister(reg int) {
-	// In a more sophisticated implementation, we would track free registers
+	// Don't free registers that are used by variables
+	if c.variableRegisters[reg] {
+		return
+	}
+	
+	// Add the register to the free list for reuse
+	// Only add if it's not already in the list
+	for _, freeReg := range c.freeRegisters {
+		if freeReg == reg {
+			return // Already free
+		}
+	}
+	c.freeRegisters = append(c.freeRegisters, reg)
 }
 
 // AddConstant adds a constant to the constants pool
@@ -230,6 +254,8 @@ func (c *Compiler) compileStatement(stmt ast.Statement) error {
 		return c.compileExpressionStatement(s)
 	case *ast.VariableDeclaration:
 		return c.compileVariableDeclaration(s)
+	case *ast.FunctionDeclaration:
+		return c.compileFunctionDeclaration(s)
 	case *ast.IfStatement:
 		return c.compileIfStatement(s)
 	case *ast.ForStatement:
@@ -257,6 +283,9 @@ func (c *Compiler) compileExpressionStatement(stmt *ast.ExpressionStatement) err
 func (c *Compiler) compileVariableDeclaration(stmt *ast.VariableDeclaration) error {
 	for _, decl := range stmt.Declarations {
 		reg := c.AllocateRegister()
+		
+		// Mark this register as used by a variable
+		c.variableRegisters[reg] = true
 		
 		// Compile initializer if present
 		if decl.Init != nil {
@@ -326,12 +355,12 @@ func (c *Compiler) compileReturnStatement(stmt *ast.ReturnStatement) error {
 			return err
 		}
 		
-		// Return with value
-		c.Emit(vm.OpReturn, reg)
+		// Return with value (a=register, b=1 for one return value)
+		c.Emit(vm.OpReturn, reg, 1)
 		c.FreeRegister(reg)
 	} else {
-		// Return nil
-		c.Emit(vm.OpReturn, 0)
+		// Return nil (a=0, b=0 for no return values)
+		c.Emit(vm.OpReturn, 0, 0)
 	}
 	
 	return nil
@@ -383,6 +412,8 @@ func (c *Compiler) compileExpression(expr ast.Expression, targetReg int) error {
 		return c.compileAssignmentExpression(e, targetReg)
 	case *ast.MemberExpression:
 		return c.compileMemberExpression(e, targetReg)
+	case *ast.ArrowFunctionExpression:
+		return c.compileArrowFunctionExpression(e, targetReg)
 	default:
 		return fmt.Errorf("unsupported expression type: %T", expr)
 	}
@@ -390,18 +421,18 @@ func (c *Compiler) compileExpression(expr ast.Expression, targetReg int) error {
 
 // compileIdentifier compiles an identifier
 func (c *Compiler) compileIdentifier(expr *ast.Identifier, targetReg int) error {
-	symbol, ok := c.symbolTable.Resolve(expr.Name)
-	if !ok {
-		// Try to load as global
-		constIndex := c.AddConstant(vm.NewStringValue(expr.Name))
-		c.Emit(vm.OpGetGlobal, targetReg, constIndex)
-		return nil
-	}
-	
-	if symbol.Type == SymbolLocal {
-		c.Emit(vm.OpMove, targetReg, symbol.Register)
+	symbol, found := c.symbolTable.Resolve(expr.Name)
+	if found {
+		if symbol.Type == SymbolLocal {
+			// Move from symbol's register to target register
+			c.Emit(vm.OpMove, targetReg, symbol.Register)
+		} else {
+			// Handle other symbol types (global, function, etc.)
+			constIndex := c.AddConstant(vm.NewStringValue(expr.Name))
+			c.Emit(vm.OpGetGlobal, targetReg, constIndex)
+		}
 	} else {
-		// Global variable
+		// Treat as global variable
 		constIndex := c.AddConstant(vm.NewStringValue(expr.Name))
 		c.Emit(vm.OpGetGlobal, targetReg, constIndex)
 	}
@@ -567,6 +598,7 @@ func (c *Compiler) compileCallExpression(expr *ast.CallExpression, targetReg int
 	// Compile the function being called
 	funcReg := c.AllocateRegister()
 	if err := c.compileExpression(expr.Callee, funcReg); err != nil {
+		c.FreeRegister(funcReg)
 		return err
 	}
 	
@@ -575,6 +607,12 @@ func (c *Compiler) compileCallExpression(expr *ast.CallExpression, targetReg int
 	for i, arg := range expr.Arguments {
 		argReg := c.AllocateRegister()
 		if err := c.compileExpression(arg, argReg); err != nil {
+			// Free all allocated registers on error
+			c.FreeRegister(funcReg)
+			for j := 0; j < i; j++ {
+				c.FreeRegister(argRegs[j])
+			}
+			c.FreeRegister(argReg)
 			return err
 		}
 		argRegs[i] = argReg
@@ -584,16 +622,83 @@ func (c *Compiler) compileCallExpression(expr *ast.CallExpression, targetReg int
 	c.Emit(vm.OpMove, targetReg, funcReg)
 	
 	// Move arguments to consecutive registers after function
-	for i, argReg := range argRegs {
-		c.Emit(vm.OpMove, targetReg+1+i, argReg)
+	// We need to be careful about the order to avoid overwriting arguments
+	// If any argument register overlaps with target registers, we need to handle it carefully
+	targetArgRegs := make([]int, len(argRegs))
+	for i := range argRegs {
+		targetArgRegs[i] = targetReg + 1 + i
+	}
+	
+	// We need to handle conflicts more carefully
+	// First, identify all conflicts and create a dependency graph
+	moved := make([]bool, len(argRegs))
+	
+	// Keep moving arguments until all are moved
+	for {
+		progress := false
+		
+		for i, argReg := range argRegs {
+			if moved[i] {
+				continue
+			}
+			
+			targetArgReg := targetArgRegs[i]
+			
+			// Check if the target register is currently occupied by an unmoved argument
+			blocked := false
+			for j, otherArgReg := range argRegs {
+				if !moved[j] && j != i && otherArgReg == targetArgReg {
+					blocked = true
+					break
+				}
+			}
+			
+			if !blocked {
+				// Safe to move
+				c.Emit(vm.OpMove, targetArgReg, argReg)
+				moved[i] = true
+				progress = true
+			}
+		}
+		
+		// Check if all arguments are moved
+		allMoved := true
+		for _, m := range moved {
+			if !m {
+				allMoved = false
+				break
+			}
+		}
+		
+		if allMoved {
+			break
+		}
+		
+		if !progress {
+			// We have a cycle - need to use a temporary register
+			for i, argReg := range argRegs {
+				if !moved[i] {
+					tempReg := c.AllocateRegister()
+					c.Emit(vm.OpMove, tempReg, argReg)
+					argRegs[i] = tempReg
+					break
+				}
+			}
+		}
 	}
 	
 	// Emit call instruction
 	// OpCall format: R(A)..R(A+C-1) := R(A)(R(A+1)..R(A+B-1))
 	// A = target register (where result goes)
-	// B = number of arguments + 1
+	// B = number of arguments
 	// C = number of return values + 1
-	c.Emit(vm.OpCall, targetReg, len(expr.Arguments)+1, 1)
+	c.Emit(vm.OpCall, targetReg, len(expr.Arguments), 1)
+	
+	// Free temporary registers
+	c.FreeRegister(funcReg)
+	for _, argReg := range argRegs {
+		c.FreeRegister(argReg)
+	}
 	
 	return nil
 }
@@ -767,7 +872,124 @@ func (c *Compiler) compileMemberExpression(expr *ast.MemberExpression, targetReg
 	return nil
 }
 
+// compileFunctionDeclaration compiles a function declaration
+func (c *Compiler) compileFunctionDeclaration(stmt *ast.FunctionDeclaration) error {
+	// Create a new function
+	function := vm.NewFunction(stmt.Name.Name)
+	function.NumParams = len(stmt.Parameters)
+	
+	// Create a new compiler for the function body
+	functionCompiler := NewCompiler()
+	functionCompiler.symbolTable = NewSymbolTable(c.symbolTable)
+	
+	// Define parameters in the function's symbol table
+	for i, param := range stmt.Parameters {
+		functionCompiler.symbolTable.Define(param.Name.Name, SymbolLocal, i)
+		// Mark parameter registers as variable registers
+		functionCompiler.variableRegisters[i] = true
+	}
+	
+	// Set the next register to start after parameters
+	functionCompiler.nextRegister = len(stmt.Parameters)
+	functionCompiler.maxRegisters = len(stmt.Parameters)
+	
+	// Compile the function body
+	if err := functionCompiler.compileBlockStatement(stmt.Body); err != nil {
+		return err
+	}
+	
+	// Add implicit return if the function doesn't end with a return
+	if len(functionCompiler.instructions) == 0 || 
+		functionCompiler.instructions[len(functionCompiler.instructions)-1].GetOpCode() != vm.OpReturn {
+		functionCompiler.Emit(vm.OpReturn, 0, 0) // return with no values
+	}
+	
+	// Set the compiled instructions and constants
+	function.Instructions = functionCompiler.instructions
+	function.Constants = functionCompiler.constants
+	function.NumLocals = functionCompiler.maxRegisters
+	
+	// Add the function as a constant
+	functionValue := vm.NewFunctionValue(function)
+	constIndex := c.AddConstant(functionValue)
+	
+	// Add function name as a constant for OpSetGlobal
+	nameValue := vm.NewStringValue(stmt.Name.Name)
+	nameIndex := c.AddConstant(nameValue)
+	
+	// Allocate a register for the function
+	funcReg := c.AllocateRegister()
+	
+	// Emit OpLoadK to load the function constant
+	c.Emit(vm.OpLoadK, funcReg, constIndex)
+	
+	// Emit OpSetGlobal to store the function as a global variable
+	c.Emit(vm.OpSetGlobal, funcReg, nameIndex)
+	
+	// Define the function in the symbol table as global
+	c.symbolTable.Define(stmt.Name.Name, SymbolGlobal, funcReg)
+	
+	return nil
+}
+
 // GetFunction returns the compiled function
 func (c *Compiler) GetFunction() *vm.Function {
 	return c.function
+}
+
+// compileArrowFunctionExpression compiles an arrow function expression
+func (c *Compiler) compileArrowFunctionExpression(expr *ast.ArrowFunctionExpression, targetReg int) error {
+	// Create a new function
+	function := vm.NewFunction("") // Arrow functions are anonymous
+	function.NumParams = len(expr.Parameters)
+	
+	// Create a new compiler for the function body
+	functionCompiler := NewCompiler()
+	functionCompiler.symbolTable = NewSymbolTable(c.symbolTable)
+	
+	// Define parameters in the function's symbol table
+	for i, param := range expr.Parameters {
+		functionCompiler.symbolTable.Define(param.Name.Name, SymbolLocal, i)
+	}
+	
+	// Compile the function body
+	switch body := expr.Body.(type) {
+	case *ast.BlockStatement:
+		// Block body: compile as block statement
+		if err := functionCompiler.compileBlockStatement(body); err != nil {
+			return err
+		}
+		
+		// Add implicit return if the function doesn't end with a return
+		if len(functionCompiler.instructions) == 0 || 
+			functionCompiler.instructions[len(functionCompiler.instructions)-1].GetOpCode() != vm.OpReturn {
+			functionCompiler.Emit(vm.OpReturn, 0, 0) // return with no values
+		}
+		
+	default:
+		// Expression body: compile expression and return it
+		if bodyExpr, ok := body.(ast.Expression); ok {
+			returnReg := functionCompiler.AllocateRegister()
+			if err := functionCompiler.compileExpression(bodyExpr, returnReg); err != nil {
+				return err
+			}
+			functionCompiler.Emit(vm.OpReturn, returnReg, 1) // return with one value
+		} else {
+			return fmt.Errorf("unsupported arrow function body type: %T", body)
+		}
+	}
+	
+	// Set the compiled instructions and constants
+	function.Instructions = functionCompiler.instructions
+	function.Constants = functionCompiler.constants
+	function.NumLocals = functionCompiler.maxRegisters
+	
+	// Add the function as a constant
+	functionValue := vm.NewFunctionValue(function)
+	constIndex := c.AddConstant(functionValue)
+	
+	// Load the function constant into the target register
+	c.Emit(vm.OpLoadK, targetReg, constIndex)
+	
+	return nil
 }
