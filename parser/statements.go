@@ -1,8 +1,8 @@
 package parser
 
 import (
-	"github.com/tsgo/tg/ast"
-	"github.com/tsgo/tg/lexer"
+	"github.com/xingleixu/TG-Script/ast"
+	"github.com/xingleixu/TG-Script/lexer"
 )
 
 // ============================================================================

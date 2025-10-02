@@ -60,7 +60,7 @@ Examples:
   tg fmt hello.tg            # Format code
   tg migrate hello.ts        # Migrate TypeScript file
 
-For more information visit: https://github.com/tsgo/tg
+For more information visit: https://github.com/xingleixu/TG-Script
 `, version)
 }
 

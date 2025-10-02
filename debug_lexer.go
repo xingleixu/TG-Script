@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/tsgo/tg/lexer"
+	"github.com/xingleixu/TG-Script/lexer"
 )
 
 func main() {

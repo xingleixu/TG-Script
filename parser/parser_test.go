@@ -3,8 +3,8 @@ package parser
 import (
 	"testing"
 
-	"github.com/tsgo/tg/ast"
-	"github.com/tsgo/tg/lexer"
+	"github.com/xingleixu/TG-Script/ast"
+	"github.com/xingleixu/TG-Script/lexer"
 )
 
 // Helper function to create a parser from source code

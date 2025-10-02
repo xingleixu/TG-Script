@@ -3,7 +3,7 @@ package ast
 import (
 	"strings"
 
-	"github.com/tsgo/tg/lexer"
+	"github.com/xingleixu/TG-Script/lexer"
 )
 
 // Node represents a node in the AST.

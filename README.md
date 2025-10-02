@@ -20,7 +20,7 @@ TG-Script is a high-performance static-typed scripting language based on a TypeS
 
 ```bash
 # Install TG-Script
-go install github.com/tsgo/tg/cmd/tg@latest
+go install github.com/xingleixu/TG-Script/cmd/tg@latest
 
 # Run script
 tg run examples/hello.tg

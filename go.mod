@@ -1,7 +1,3 @@
-module github.com/tsgo/tg
+module github.com/xingleixu/TG-Script
 
 go 1.21
-
-require (
-	// Dependencies that may be needed in the future
-)

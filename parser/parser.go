@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/tsgo/tg/ast"
-	"github.com/tsgo/tg/lexer"
+	"github.com/xingleixu/TG-Script/ast"
+	"github.com/xingleixu/TG-Script/lexer"
 )
 
 // Parser represents the parser state.
