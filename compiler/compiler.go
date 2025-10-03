@@ -390,6 +390,8 @@ func (c *Compiler) compileExpression(expr ast.Expression, targetReg int) error {
 		return c.compileIdentifier(e, targetReg)
 	case *ast.IntegerLiteral:
 		return c.compileIntegerLiteral(e, targetReg)
+	case *ast.FloatLiteral:
+		return c.compileFloatLiteral(e, targetReg)
 	case *ast.StringLiteral:
 		return c.compileStringLiteral(e, targetReg)
 	case *ast.BooleanLiteral:
@@ -443,6 +445,13 @@ func (c *Compiler) compileIdentifier(expr *ast.Identifier, targetReg int) error 
 // compileIntegerLiteral compiles an integer literal
 func (c *Compiler) compileIntegerLiteral(expr *ast.IntegerLiteral, targetReg int) error {
 	constIndex := c.AddConstant(vm.NewIntValue(expr.Value))
+	c.Emit(vm.OpLoadK, targetReg, constIndex)
+	return nil
+}
+
+// compileFloatLiteral compiles a float literal
+func (c *Compiler) compileFloatLiteral(expr *ast.FloatLiteral, targetReg int) error {
+	constIndex := c.AddConstant(vm.NewFloatValue(expr.Value))
 	c.Emit(vm.OpLoadK, targetReg, constIndex)
 	return nil
 }

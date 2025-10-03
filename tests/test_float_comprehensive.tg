@@ -1,0 +1,53 @@
+// 全面的浮点数字面量测试
+
+// 基本浮点数
+let basic1 = 3.14;
+let basic2 = 0.5;
+let basic3 = 123.456;
+
+// 科学记数法
+let scientific1 = 1.23e4;    // 12300
+let scientific2 = 1.23E4;    // 12300 (大写E)
+let scientific3 = 1.23e-4;   // 0.000123
+let scientific4 = 1.23E-4;   // 0.000123 (大写E)
+let scientific5 = 5e10;      // 50000000000
+let scientific6 = 2E-10;     // 0.0000000002
+
+// 边界情况
+let zero = 0.0;
+let negative = -3.14;
+let verySmall = 0.000001;
+let veryLarge = 999999.999999;
+
+// 特殊格式
+let leadingZero = 0.123;
+let trailingZero = 123.0;
+let noLeadingZero = 0.5;     // 必须有前导零
+
+// 浮点数运算测试
+let addition = 1.5 + 2.3;
+let subtraction = 5.7 - 2.2;
+let multiplication = 2.5 * 4.0;
+let division = 10.0 / 3.0;
+
+// 混合运算
+let mixed1 = 3.14 + 2;       // 浮点数 + 整数
+let mixed2 = 5 * 2.5;        // 整数 * 浮点数
+let mixed3 = 10 / 3.0;       // 整数 / 浮点数
+
+// 比较运算
+let compare1 = 3.14 > 3.0;
+let compare2 = 2.5 == 2.5;
+let compare3 = 1.0 != 1.1;
+let compare4 = 0.1 + 0.2 > 0.3;  // 浮点数精度测试
+
+// 负数浮点数
+let negative1 = -1.5;
+let negative2 = -0.001;
+let negative3 = -1.23e-4;
+
+// 复杂表达式
+let complex1 = (3.14 * 2.0) + (1.5 / 2.0);
+let complex2 = scientific1 + scientific3;
+
+"Comprehensive float test completed";
