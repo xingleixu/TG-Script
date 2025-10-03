@@ -1,0 +1,15 @@
+// const重新赋值错误测试
+// Test for const reassignment error
+
+print("=== const重新赋值错误测试 ===");
+
+// 声明一个const变量
+const IMMUTABLE_VALUE = 42;
+print("IMMUTABLE_VALUE =", IMMUTABLE_VALUE);
+
+// 尝试重新赋值（这应该会产生错误）
+print("尝试重新赋值const变量...");
+let IMMUTABLE_VALUE = 100;
+
+print("如果看到这行，说明重新赋值成功了（这不应该发生）");
+print("IMMUTABLE_VALUE =", IMMUTABLE_VALUE);

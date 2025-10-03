@@ -117,7 +117,7 @@ func NewResolver() *Resolver {
 func (r *Resolver) defineBuiltins() {
 	// Built-in functions
 	builtins := map[string]Type{
-		"print":  NewFunctionType([]Type{StringType}, VoidType),
+		"print":  NewVariadicFunctionType([]Type{}, VoidType), // print accepts any number of arguments of any type
 		"len":    NewFunctionType([]Type{NewArrayType(StringType)}, IntType),
 		"typeof": NewFunctionType([]Type{StringType}, StringType),
 	}
@@ -276,7 +276,7 @@ func (r *Resolver) resolveFunctionDeclaration(stmt *ast.FunctionDeclaration) {
 	// Resolve parameter types
 	var paramTypes []Type
 	for _, param := range stmt.Parameters {
-		var paramType Type = UndefinedType
+		var paramType Type = AnyType // Default to AnyType for unannotated parameters
 		if param.TypeAnnotation != nil {
 			paramType = r.resolveTypeAnnotation(param.TypeAnnotation)
 		}

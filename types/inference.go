@@ -110,6 +110,11 @@ func (ti *TypeInferrer) inferBinaryExpressionType(expr *ast.BinaryExpression) Ty
 
 // inferArithmeticType infers the result type of arithmetic operations
 func (ti *TypeInferrer) inferArithmeticType(leftType, rightType Type) Type {
+	// If either operand is AnyType, return AnyType (TypeScript behavior)
+	if leftType.Equals(AnyType) || rightType.Equals(AnyType) {
+		return AnyType
+	}
+	
 	// String concatenation
 	if IsStringType(leftType) || IsStringType(rightType) {
 		return StringType
@@ -130,6 +135,11 @@ func (ti *TypeInferrer) inferArithmeticType(leftType, rightType Type) Type {
 
 // inferBitwiseType infers the result type of bitwise operations
 func (ti *TypeInferrer) inferBitwiseType(leftType, rightType Type) Type {
+	// If either operand is AnyType, return AnyType (TypeScript behavior)
+	if leftType.Equals(AnyType) || rightType.Equals(AnyType) {
+		return AnyType
+	}
+	
 	if IsNumericType(leftType) && IsNumericType(rightType) {
 		return IntType // Bitwise operations always return integers
 	}

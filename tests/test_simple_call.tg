@@ -1,0 +1,9 @@
+// Simple function call test
+function add(a: number, b: number): number {
+    print("a =", a);
+    print("b =", b);
+    return a + b;
+}
+
+let result = add(5, 3);
+print("result =", result);

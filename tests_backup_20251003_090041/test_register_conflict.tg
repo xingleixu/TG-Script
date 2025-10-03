@@ -1,0 +1,7 @@
+// 测试寄存器冲突的简单案例
+function getValue() {
+    return 42;
+}
+
+let result = getValue();
+print("Value:", result);

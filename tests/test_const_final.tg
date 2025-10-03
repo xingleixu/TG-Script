@@ -1,0 +1,9 @@
+// 简单const功能测试
+const PI = 3;
+const MESSAGE = "Hello";
+
+// 使用const值
+const AREA = PI * 5 * 5;
+
+// 输出
+print("Test completed");

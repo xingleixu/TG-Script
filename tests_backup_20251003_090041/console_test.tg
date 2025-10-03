@@ -1,0 +1,4 @@
+let x = 42;
+console.log("Hello, world!");
+console.log(x);
+undefinedFunction(123);

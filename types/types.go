@@ -32,6 +32,7 @@ const (
 	NullKind
 	UndefinedKind
 	VoidKind
+	AnyKind
 	
 	// Extended numeric types
 	Int8Kind
@@ -58,6 +59,8 @@ func (p *PrimitiveType) String() string {
 		return "undefined"
 	case VoidKind:
 		return "void"
+	case AnyKind:
+		return "any"
 	case Int8Kind:
 		return "int8"
 	case Int16Kind:
@@ -84,6 +87,16 @@ func (p *PrimitiveType) Equals(other Type) bool {
 
 func (p *PrimitiveType) IsAssignableTo(other Type) bool {
 	if p.Equals(other) {
+		return true
+	}
+	
+	// Any type can be assigned to any other type (TypeScript behavior)
+	if p.Kind == AnyKind {
+		return true
+	}
+	
+	// Any type can accept any value (TypeScript behavior)
+	if otherPrim, ok := other.(*PrimitiveType); ok && otherPrim.Kind == AnyKind {
 		return true
 	}
 	
@@ -310,7 +323,8 @@ var (
 	NullType      = &PrimitiveType{Kind: NullKind}
 	UndefinedType = &PrimitiveType{Kind: UndefinedKind}
 	VoidType      = &PrimitiveType{Kind: VoidKind}
-	
+	AnyType       = &PrimitiveType{Kind: AnyKind}
+
 	Int8Type    = &PrimitiveType{Kind: Int8Kind}
 	Int16Type   = &PrimitiveType{Kind: Int16Kind}
 	Int32Type   = &PrimitiveType{Kind: Int32Kind}

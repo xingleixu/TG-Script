@@ -1,0 +1,41 @@
+// 测试浮点数字面量支持
+
+// 基本浮点数声明
+let PI = 3.14159;
+let E = 2.71828;
+let ZERO = 0.0;
+let NEGATIVE = -1.5;
+
+// 浮点数运算
+let SUM = PI + E;
+let PRODUCT = PI * 2.0;
+let DIVISION = PI / 2.0;
+let SUBTRACTION = PI - 1.0;
+
+// 浮点数比较
+let IS_GREATER = PI > 3.0;
+let IS_EQUAL = ZERO == 0.0;
+
+// 浮点数与整数混合运算
+let MIXED_SUM = PI + 1;
+let MIXED_PRODUCT = E * 3;
+
+// 简单的浮点数计算
+let radius = 2.5;
+let area = PI * radius * radius;
+
+// 条件语句中使用浮点数
+if (PI > 3.0) {
+    let MESSAGE = "Pi is greater than 3";
+}
+
+// 循环中使用浮点数
+let sum = 0.0;
+let i = 0.1;
+while (i <= 1.0) {
+    sum = sum + i;
+    i = i + 0.1;
+}
+
+// 返回字符串表示测试完成
+"Test completed successfully";

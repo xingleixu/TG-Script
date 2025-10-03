@@ -272,9 +272,72 @@ func (p *Parser) parseForStatement() ast.Statement {
 			}
 		} else {
 			// Regular for loop with declaration
-			// Backtrack and parse as regular for loop
-			// This is a simplified approach - in a full implementation,
-			// we'd need better lookahead
+			// Reset to parse variable declaration for regular for loop
+			// We already consumed LET/CONST/VAR and IDENT, so we need to backtrack
+			// For now, we'll reconstruct the variable declaration
+			
+			// Create a variable declaration with the identifier we already parsed
+			declarator := &ast.VariableDeclarator{
+				Id: id,
+			}
+			
+			// Check if there's an assignment
+			if p.peekTokenIs(lexer.ASSIGN) {
+				p.nextToken() // consume '='
+				p.nextToken() // move to the value
+				declarator.Init = p.parseExpression(LOWEST)
+			}
+			
+			init := &ast.VariableDeclaration{
+				DeclPos: forPos, // Use the for position as declaration position
+				Kind:    lexer.LET, // We know it's LET from the check above
+				Declarations: []*ast.VariableDeclarator{declarator},
+			}
+			
+			// Continue with regular for loop parsing
+			if !p.expectPeek(lexer.SEMICOLON) {
+				return nil
+			}
+
+			p.nextToken()
+
+			var test ast.Expression
+			if !p.currentTokenIs(lexer.SEMICOLON) {
+				test = p.parseExpression(LOWEST)
+			}
+
+			if !p.expectPeek(lexer.SEMICOLON) {
+				return nil
+			}
+
+			p.nextToken()
+
+			var update ast.Expression
+			if !p.currentTokenIs(lexer.RPAREN) {
+				update = p.parseExpression(LOWEST)
+			}
+
+			if !p.expectPeek(lexer.RPAREN) {
+				return nil
+			}
+
+			rParen := p.currentToken.Position
+
+			if !p.expectPeek(lexer.LBRACE) {
+				return nil
+			}
+
+			body := p.parseBlockStatement()
+
+			return &ast.ForStatement{
+				ForPos: forPos,
+				LParen: lParen,
+				Init:   init,
+				Test:   test,
+				Update: update,
+				RParen: rParen,
+				Body:   body,
+			}
 		}
 	}
 

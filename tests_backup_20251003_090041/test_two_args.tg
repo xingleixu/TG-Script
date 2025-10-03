@@ -1,0 +1,6 @@
+function test(x, y) {
+    print("x =", x);
+    print("y =", y);
+}
+
+test(10, 20);

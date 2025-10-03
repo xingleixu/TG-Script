@@ -1,0 +1,14 @@
+// 简单函数测试
+
+// 基本加法函数
+function add(a: number, b: number): number {
+    return a + b;
+}
+
+// 测试函数调用
+let result = add(5, 3);
+print("Function result:", result);
+
+// 测试直接计算
+let direct = 5 + 3;
+print("Direct result:", direct);

@@ -1,0 +1,49 @@
+// ASI (Automatic Semicolon Insertion) 测试文件
+// 测试分号可选性，类似TypeScript规则
+
+// 变量声明 - 不带分号
+let a = 10
+let b = 20
+let c = a + b
+
+// 变量声明 - 带分号（应该也能正常工作）
+let d = 30;
+let e = 40;
+
+// 表达式语句 - 不带分号
+print("a =", a)
+print("b =", b)
+print("c =", c)
+
+// 表达式语句 - 带分号
+print("d =", d);
+print("e =", e);
+
+// 同一行多个语句 - 必须用分号分隔
+let x = 1; let y = 2; print("x =", x, "y =", y)
+
+// return语句测试
+function testReturn() {
+    if (true) {
+        return 42  // 不带分号
+    }
+    return 0;  // 带分号
+}
+
+// break和continue语句测试（在for循环中）
+for (let i = 0; i < 5; i++) {
+    if (i == 2) {
+        continue  // 不带分号
+    }
+    if (i == 4) {
+        break;    // 带分号
+    }
+    print("i =", i)
+}
+
+// 测试for循环中的分号（必须保留）
+for (let j = 0; j < 3; j++) {
+    print("j =", j)
+}
+
+print("ASI测试完成")

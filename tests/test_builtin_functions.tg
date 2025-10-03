@@ -1,0 +1,7 @@
+// 测试内置函数调用
+
+let message = "Hello, World!";
+print(message);
+
+let num = 42;
+print(num);

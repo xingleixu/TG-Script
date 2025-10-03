@@ -1,0 +1,32 @@
+// 测试箭头函数只能赋值给const变量的规则
+// Test rule: arrow functions can only be assigned to const variables
+
+print("=== 箭头函数const赋值规则测试 ===");
+
+// 正确用法：箭头函数赋值给const变量
+print("1. 正确用法 - const变量:");
+const add = (a, b) => a + b;
+const square = x => x * x;
+const greet = name => "Hello, " + name;
+const getAnswer = () => 42;
+
+print("const add 函数定义成功");
+print("const square 函数定义成功");
+print("const greet 函数定义成功");
+print("const getAnswer 函数定义成功");
+
+// 测试这些函数是否正常工作
+print("测试 const 箭头函数:");
+let result1 = add(3, 4);
+print("add(3, 4) =", result1);
+
+let result2 = square(5);
+print("square(5) =", result2);
+
+let result3 = greet("TG-Script");
+print("greet('TG-Script') =", result3);
+
+let result4 = getAnswer();
+print("getAnswer() =", result4);
+
+print("=== const 箭头函数测试完成 ===");

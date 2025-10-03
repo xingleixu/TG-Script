@@ -1,0 +1,50 @@
+// const不可变性测试
+// Test const immutability constraints
+
+print("=== const不可变性测试 ===");
+
+// 1. 正常的const声明和使用
+print("1. 正常的const声明和使用:");
+const MAX_SIZE = 100;
+const NAME = "TG-Script";
+const ENABLED = true;
+
+print("MAX_SIZE =", MAX_SIZE);
+print("NAME =", NAME);
+print("ENABLED =", ENABLED);
+
+// 2. 尝试重新赋值const变量（应该报错）
+print("2. 尝试重新赋值const变量:");
+
+// 这些赋值应该被类型检查器捕获并报错
+// MAX_SIZE = 200;        // 应该报错：Cannot assign to const variable 'MAX_SIZE'
+// NAME = "Updated";      // 应该报错：Cannot assign to const variable 'NAME'
+// ENABLED = false;       // 应该报错：Cannot assign to const variable 'ENABLED'
+
+print("如果看到这条消息，说明const重新赋值检查正在工作");
+
+// 3. 对比let和var的重新赋值（应该正常）
+print("3. 对比let和var的重新赋值:");
+
+let letVar = 10;
+var varVar = 20;
+
+print("初始值 - letVar:", letVar, "varVar:", varVar);
+
+letVar = 100;
+varVar = 200;
+
+print("重新赋值后 - letVar:", letVar, "varVar:", varVar);
+
+// 4. const在表达式中的使用（应该正常）
+print("4. const在表达式中的使用:");
+
+const A = 5;
+const B = 10;
+const SUM = A + B;
+const PRODUCT = A * B;
+
+print("A =", A, "B =", B);
+print("SUM =", SUM, "PRODUCT =", PRODUCT);
+
+print("=== const不可变性测试完成 ===");

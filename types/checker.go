@@ -195,17 +195,37 @@ func (tc *TypeChecker) checkVariableDeclaration(decl *ast.VariableDeclaration) {
 
 // checkFunctionDeclaration type checks a function declaration
 func (tc *TypeChecker) checkFunctionDeclaration(decl *ast.FunctionDeclaration) {
+	// Collect parameter types
+	var paramTypes []Type
+	for _, param := range decl.Parameters {
+		var paramType Type = AnyType // Default to AnyType like TypeScript
+		if param.TypeAnnotation != nil {
+			paramType = tc.resolveTypeAnnotation(param.TypeAnnotation)
+		}
+		paramTypes = append(paramTypes, paramType)
+	}
+
+	// Determine return type
+	var returnType Type = UndefinedType
+	if decl.ReturnType != nil {
+		returnType = tc.resolveTypeAnnotation(decl.ReturnType)
+	}
+
+	// Create function type and register it in the symbol table
+	funcType := &FunctionType{
+		Parameters: paramTypes,
+		ReturnType: returnType,
+		Variadic:   false,
+	}
+	tc.resolver.Define(decl.Name.Name, funcType, FunctionSymbol, decl.Name.Pos())
+
 	// Enter function scope
 	tc.resolver.EnterScope()
 	defer tc.resolver.ExitScope()
 
 	// Add parameters to scope
-	for _, param := range decl.Parameters {
-		var paramType Type = UndefinedType
-		if param.TypeAnnotation != nil {
-			paramType = tc.resolveTypeAnnotation(param.TypeAnnotation)
-		}
-		tc.resolver.Define(param.Name.Name, paramType, ParameterSymbol, param.Name.Pos())
+	for i, param := range decl.Parameters {
+		tc.resolver.Define(param.Name.Name, paramTypes[i], ParameterSymbol, param.Name.Pos())
 	}
 
 	// Check function body
@@ -250,6 +270,10 @@ func (tc *TypeChecker) checkBinaryExpression(expr *ast.BinaryExpression) Type {
 	// Type compatibility checks
 	switch operator {
 	case "+":
+		// If either operand is AnyType, allow the operation (TypeScript behavior)
+		if leftType.Equals(AnyType) || rightType.Equals(AnyType) {
+			return AnyType
+		}
 		// Allow string concatenation or numeric addition
 		if IsStringType(leftType) || IsStringType(rightType) {
 			return StringType
@@ -271,6 +295,10 @@ func (tc *TypeChecker) checkBinaryExpression(expr *ast.BinaryExpression) Type {
 		return UndefinedType
 
 	case "-", "*", "/", "%":
+		// If either operand is AnyType, allow the operation (TypeScript behavior)
+		if leftType.Equals(AnyType) || rightType.Equals(AnyType) {
+			return AnyType
+		}
 		if !IsNumericType(leftType) || !IsNumericType(rightType) {
 			suggestion := fmt.Sprintf("Convert operands to numeric types (int or float) before using '%s'", operator)
 			context := fmt.Sprintf("Left operand: %s, Right operand: %s", leftType.String(), rightType.String())
@@ -319,6 +347,10 @@ func (tc *TypeChecker) checkUnaryExpression(expr *ast.UnaryExpression) Type {
 
 	switch operator {
 	case "+", "-":
+		// If operand is AnyType, allow the operation (TypeScript behavior)
+		if operandType.Equals(AnyType) {
+			return AnyType
+		}
 		if !IsNumericType(operandType) {
 			suggestion := fmt.Sprintf("Use numeric types (int or float) with unary operator '%s'", operator)
 			context := fmt.Sprintf("Operand type: %s", operandType.String())
@@ -336,6 +368,10 @@ func (tc *TypeChecker) checkUnaryExpression(expr *ast.UnaryExpression) Type {
 		return BooleanType
 
 	case "++", "--":
+		// If operand is AnyType, allow the operation (TypeScript behavior)
+		if operandType.Equals(AnyType) {
+			return AnyType
+		}
 		if !IsNumericType(operandType) {
 			suggestion := fmt.Sprintf("Use numeric types (int or float) with operator '%s'", operator)
 			context := fmt.Sprintf("Operand type: %s", operandType.String())
@@ -582,7 +618,7 @@ func (tc *TypeChecker) checkArrowFunctionExpression(expr *ast.ArrowFunctionExpre
 	var paramsNeedInference []int // Track which parameters need type inference
 
 	for i, param := range expr.Parameters {
-		var paramType Type = UndefinedType
+		var paramType Type = AnyType // Default to AnyType like TypeScript
 		if param.TypeAnnotation != nil {
 			paramType = tc.resolveTypeAnnotation(param.TypeAnnotation)
 		} else {
@@ -608,11 +644,8 @@ func (tc *TypeChecker) checkArrowFunctionExpression(expr *ast.ArrowFunctionExpre
 				paramTypes[paramIndex] = inferredType
 				// Update the parameter type in the symbol table
 				tc.resolver.UpdateType(param.Name.Name, inferredType)
-			} else {
-				// Default to int for numeric operations, or keep as undefined
-				paramTypes[paramIndex] = IntType
-				tc.resolver.UpdateType(param.Name.Name, IntType)
 			}
+			// Keep AnyType as default (already set above), don't override with IntType
 		}
 	}
 
@@ -810,6 +843,11 @@ func (tc *TypeChecker) resolveTypeAnnotation(annotation ast.TypeNode) Type {
 func (tc *TypeChecker) isAssignable(source, target Type) bool {
 	// Same type
 	if source.Equals(target) {
+		return true
+	}
+
+	// AnyType can be assigned to any type and any type can be assigned to AnyType (TypeScript behavior)
+	if source.Equals(AnyType) || target.Equals(AnyType) {
 		return true
 	}
 

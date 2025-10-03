@@ -1,0 +1,26 @@
+// 测试数组功能
+let arr1 = [1, 2, 3];
+let arr2 = ["hello", "world"];
+let arr3 = [true, false, null];
+let arr4 = [];
+
+// 测试数组元素访问
+let first = arr1[0];
+let second = arr1[1];
+let third = arr1[2];
+
+// 测试数组赋值
+arr1[0] = 10;
+arr2[1] = "TG-Script";
+
+// 测试嵌套数组
+let nested = [[1, 2], [3, 4]];
+let innerFirst = nested[0][0];
+let innerSecond = nested[1][1];
+
+// 测试混合类型数组
+let mixed = [1, "hello", true, null, [5, 6]];
+let mixedElement = mixed[4][1];
+
+// 返回一些测试结果
+arr1[0] + arr1[1] + arr1[2];

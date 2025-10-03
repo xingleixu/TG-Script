@@ -1,0 +1,38 @@
+// 循环语句测试
+
+print("循环语句测试:");
+
+// for 循环测试
+print("for 循环测试:")
+let sum = 0
+for (let i = 1; i <= 5; i = i + 1) {
+    print("i =", i)
+    sum = sum + i
+}
+print("sum =", sum)
+
+// while 循环测试
+print("while 循环测试:")
+let count = 0
+while (count < 3) {
+    print("count =", count)
+    count = count + 1
+}
+
+// 嵌套循环测试
+print("嵌套循环测试:")
+for (let i = 1; i <= 3; i = i + 1) {
+    for (let j = 1; j <= 2; j = j + 1) {
+        print("i =", i, ", j =", j)
+    }
+}
+
+// 循环中的条件语句
+print("循环中的条件语句:")
+for (let i = 1; i <= 10; i = i + 1) {
+    if (i % 2 == 0) {
+        print(i, "是偶数")
+    } else {
+        print(i, "是奇数")
+    }
+}

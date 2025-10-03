@@ -1,0 +1,33 @@
+// 箭头函数测试
+
+print("=== 箭头函数测试 ===");
+
+// 基本箭头函数
+print("定义 add 函数...");
+const add = (a, b) => a + b;
+
+print("定义 square 函数...");
+const square = x => x * x;
+
+print("定义 greet 函数...");
+const greet = name => "Hello, " + name;
+
+print("定义 getAnswer 函数...");
+const getAnswer = () => 42;
+
+// 测试箭头函数
+print("测试 add 函数...");
+result1 = add(3, 4);
+print("add(3, 4) =", result1);
+
+print("测试 square 函数...");
+result2 = square(5);
+print("square(5) =", result2);
+
+print("测试 greet 函数...");
+result3 = greet("Arrow");
+print("greet('Arrow') =", result3);
+
+print("测试 getAnswer 函数...");
+result4 = getAnswer();
+print("getAnswer() =", result4);

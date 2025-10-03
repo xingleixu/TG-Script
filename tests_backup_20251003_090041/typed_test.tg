@@ -1,0 +1,11 @@
+// Type checker test with type annotations
+
+let x: number = 42;
+let y: number = 3.14;
+let name: string = "Hello";
+
+function add(a: number, b: number): number {
+    return a + b;
+}
+
+let result: number = add(10, 20);

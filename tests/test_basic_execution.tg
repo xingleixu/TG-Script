@@ -1,0 +1,15 @@
+// 测试基本功能（无类型注解）
+
+// 变量声明和基本运算
+let a = 5;
+let b = 3;
+let sum = a + b;
+let product = a * b;
+
+// 字符串操作
+let name = "World";
+let greeting = "Hello, " + name;
+
+// 布尔运算
+let isPositive = sum > 0;
+let isEven = sum % 2 == 0;

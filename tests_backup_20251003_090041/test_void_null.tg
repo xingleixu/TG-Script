@@ -1,0 +1,9 @@
+// 简单测试void和null类型
+let a = null;
+let b = void;
+let c = undefined;
+
+// 测试变量赋值
+a;
+b;
+c;

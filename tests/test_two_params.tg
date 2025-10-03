@@ -1,0 +1,6 @@
+function test(a: number, b: number): void {
+    print("a =", a);
+    print("b =", b);
+}
+
+test(10, 20);

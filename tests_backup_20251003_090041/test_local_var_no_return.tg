@@ -1,0 +1,7 @@
+function test(a, b) {
+    var temp = a + b;
+    return 42;  // Return a constant, not the local variable
+}
+
+var result = test(10, 20);
+print("result =", result);

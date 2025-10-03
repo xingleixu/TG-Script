@@ -1,0 +1,10 @@
+function add(a, b) {
+    var result = a + b;
+    print("a =", a);
+    print("b =", b);
+    print("result =", result);
+    return result;
+}
+
+var sum = add(10, 20);
+print("sum =", sum);

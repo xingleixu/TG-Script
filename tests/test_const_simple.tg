@@ -1,0 +1,39 @@
+// const关键字简单测试
+// Simple test for const keyword
+
+print("=== const关键字简单测试 ===");
+
+// 1. 基础const声明
+print("1. 基础const声明:");
+
+const NUMBER = 42;
+const TEXT = "Hello";
+const FLAG = true;
+
+print(NUMBER);
+print(TEXT);
+print(FLAG);
+
+// 2. const在计算中的使用
+print("2. const在计算中的使用:");
+
+const A = 10;
+const B = 20;
+const SUM = A + B;
+
+print(A);
+print(B);
+print(SUM);
+
+// 3. const与字符串连接
+print("3. const与字符串连接:");
+
+const FIRST_NAME = "TG";
+const LAST_NAME = "Script";
+const FULL_NAME = FIRST_NAME + "-" + LAST_NAME;
+
+print(FIRST_NAME);
+print(LAST_NAME);
+print(FULL_NAME);
+
+print("=== const简单测试完成 ===");

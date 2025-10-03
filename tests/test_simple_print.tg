@@ -1,0 +1,5 @@
+function test(a: number): void {
+    print("a =", a);
+}
+
+test(42);

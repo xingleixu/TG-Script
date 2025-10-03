@@ -1,0 +1,6 @@
+function double(x: number): void {
+    return x * 2;
+}
+
+var result = double(21);
+print("result =", result);

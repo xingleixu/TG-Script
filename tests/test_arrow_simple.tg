@@ -1,0 +1,14 @@
+// 简化的箭头函数测试
+
+// 测试多参数箭头函数
+const add = (a, b) => a + b;
+print("Testing add function...");
+let result1 = add(3, 4);
+print("add(3, 4) =", result1);
+
+// 测试单参数箭头函数
+print("Testing square function...");
+const square = x => x * x;
+print("square function defined");
+let result2 = square(5);
+print("square(5) =", result2);

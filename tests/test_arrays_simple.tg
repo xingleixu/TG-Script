@@ -1,0 +1,20 @@
+// 测试基本数组功能
+let intArray = [1, 2, 3];
+let stringArray = ["hello", "world"];
+let boolArray = [true, false];
+let emptyArray = [];
+
+// 测试数组元素访问
+let first = intArray[0];
+let second = stringArray[1];
+
+// 测试数组赋值
+intArray[0] = 10;
+stringArray[1] = "TG-Script";
+
+// 测试嵌套数组（同类型）
+let nestedInt = [[1, 2], [3, 4]];
+let innerElement = nestedInt[0][1];
+
+// 返回测试结果
+first + intArray[1];

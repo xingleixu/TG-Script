@@ -1,0 +1,31 @@
+// 箭头函数高级特性测试
+
+print("=== 箭头函数高级特性测试 ===");
+
+// 嵌套箭头函数调用
+print("测试嵌套箭头函数调用...");
+const add = (a, b) => a + b;
+const multiply = (a, b) => a * b;
+const subtract = (a, b) => a - b;
+
+let result1 = add(multiply(2, 3), subtract(10, 5));
+print("add(multiply(2, 3), subtract(10, 5)) =", result1);
+
+// 箭头函数作为参数（高阶函数）
+print("测试箭头函数作为参数...");
+const applyOperation = (x, y, op) => op(x, y);
+
+let result2 = applyOperation(8, 3, add);
+print("applyOperation(8, 3, add) =", result2);
+
+let result3 = applyOperation(8, 3, multiply);
+print("applyOperation(8, 3, multiply) =", result3);
+
+// 返回箭头函数的函数
+print("测试返回箭头函数的函数...");
+const createAdder = n => x => x + n;
+const addFive = createAdder(5);
+let result4 = addFive(10);
+print("createAdder(5)(10) =", result4);
+
+print("所有高级特性测试完成！");

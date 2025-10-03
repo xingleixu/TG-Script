@@ -1,0 +1,67 @@
+// 测试比较运算符
+// Test comparison operators
+
+let a = 10
+let b = 5
+let c = 10
+let d = 15
+let e = 3
+
+print("比较运算测试:")
+print("a =", a, ", b =", b, ", c =", c)
+print("d =", d, ", e =", e)
+
+// 相等比较
+print("相等比较:")
+print("a == b:", a == b)
+print("a == c:", a == c)
+print("a != b:", a != b)
+print("a != c:", a != c)
+
+// 大小比较
+print("大小比较:")
+print("a > b:", a > b)
+print("a < b:", a < b)
+print("a >= b:", a >= b)
+print("a <= b:", a <= b)
+print("a >= c:", a >= c)
+print("a <= c:", a <= c)
+
+// 更多比较
+print("更多比较:")
+print("d > a:", d > a)
+print("e < b:", e < b)
+print("d >= a:", d >= a)
+print("e <= b:", e <= b)
+print("d == a:", d == a)
+print("e != b:", e != b)
+
+// 字符串比较
+let str1 = "hello"
+let str2 = "world"
+let str3 = "hello"
+
+print("字符串比较:")
+print("str1 =", str1, ", str2 =", str2, ", str3 =", str3)
+print("str1 == str2:", str1 == str2)
+print("str1 == str3:", str1 == str3)
+print("str1 != str2:", str1 != str2)
+print("str1 != str3:", str1 != str3)
+
+// 布尔比较
+let bool1 = true
+let bool2 = false
+let bool3 = true
+
+print("布尔比较:")
+print("bool1 =", bool1, ", bool2 =", bool2, ", bool3 =", bool3)
+print("bool1 == bool2:", bool1 == bool2)
+print("bool1 == bool3:", bool1 == bool3)
+print("bool1 != bool2:", bool1 != bool2)
+print("bool1 != bool3:", bool1 != bool3)
+
+// 复杂比较表达式
+print("复杂比较表达式:")
+print("(a + b) > c:", (a + b) > c)
+print("(a * b) == (d * e):", (a * b) == (d * e))
+print("(a - b) != (c - d):", (a - b) != (c - d))

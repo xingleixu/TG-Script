@@ -1,0 +1,56 @@
+// const vs let vs var 比较测试
+// Comparison test for const vs let vs var
+
+print("=== const vs let vs var 比较测试 ===");
+
+// 1. 基础声明比较
+print("1. 基础声明比较:");
+
+var varVariable = 10;
+let letVariable = 20;
+const constVariable = 30;
+
+print("varVariable =", varVariable);
+print("letVariable =", letVariable);
+print("constVariable =", constVariable);
+
+// 2. 重新赋值测试
+print("2. 重新赋值测试:");
+
+// var和let可以重新赋值
+varVariable = 100;
+letVariable = 200;
+
+print("重新赋值后:");
+print("varVariable =", varVariable);
+print("letVariable =", letVariable);
+print("constVariable =", constVariable);
+
+// 注意：const不能重新赋值，如果尝试会报错
+// constVariable = 300; // 这行会导致错误
+
+// 3. 初始化要求测试
+print("3. 初始化要求测试:");
+
+// var和let可以不初始化
+var varNoInit;
+let letNoInit;
+
+print("varNoInit =", varNoInit);
+print("letNoInit =", letNoInit);
+
+// 注意：const必须在声明时初始化
+// const constNoInit; // 这行会导致语法错误
+
+// 4. 在表达式中的使用
+print("4. 在表达式中的使用:");
+
+var varResult = varVariable + 5;
+let letResult = letVariable + 5;
+const constResult = constVariable + 5;
+
+print("varResult =", varResult);
+print("letResult =", letResult);
+print("constResult =", constResult);
+
+print("=== 比较测试完成 ===");

@@ -1,0 +1,72 @@
+// 测试逻辑运算符
+// Test logical operators
+
+let a = true
+let b = false
+let c = true
+
+print("逻辑运算测试:")
+print("a =", a, ", b =", b, ", c =", c)
+
+// 逻辑与 (&&)
+print("逻辑与 (&&):")
+print("a && b:", a && b)
+print("a && c:", a && c)
+print("b && c:", b && c)
+print("a && a:", a && a)
+print("b && b:", b && b)
+
+// 逻辑或 (||)
+print("逻辑或 (||):")
+print("a || b:", a || b)
+print("a || c:", a || c)
+print("b || c:", b || c)
+print("a || a:", a || a)
+print("b || b:", b || b)
+
+// 逻辑非 (!)
+print("逻辑非 (!):")
+print("!a:", !a)
+print("!b:", !b)
+print("!c:", !c)
+
+// 复杂逻辑表达式
+print("复杂逻辑表达式:")
+print("a && b || c:", a && b || c)
+print("a || b && c:", a || b && c)
+print("!(a && b):", !(a && b))
+print("!a || !b:", !a || !b)
+print("(a || b) && c:", (a || b) && c)
+
+// 与数值的逻辑运算
+let num1 = 5
+let num2 = 0
+let num3 = 3
+let num4 = 0
+
+print("数值的逻辑运算:")
+print("num1 =", num1, ", num2 =", num2)
+print("num3 =", num3, ", num4 =", num4)
+print("num1 && num2:", num1 && num2)
+print("num1 || num2:", num1 || num2)
+print("num3 && num4:", num3 && num4)
+print("num3 || num4:", num3 || num4)
+print("!num1:", !num1)
+print("!num2:", !num2)
+
+// 与字符串的逻辑运算
+let str1 = "hello"
+let str2 = ""
+
+print("字符串的逻辑运算:")
+print("str1 =", str1, ", str2 =", str2)
+print("str1 && str2:", str1 && str2)
+print("str1 || str2:", str1 || str2)
+print("!str1:", !str1)
+print("!str2:", !str2)
+
+// 混合类型逻辑运算
+print("混合类型逻辑运算:")
+print("a && num1:", a && num1)
+print("b || str1:", b || str1)
+print("num2 || str2:", num2 || str2)

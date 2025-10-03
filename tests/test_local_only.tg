@@ -1,0 +1,7 @@
+function getValue() {
+    var temp = 42;
+    return temp;
+}
+
+var result = getValue();
+print("result =", result);

@@ -1,0 +1,26 @@
+// 算术运算验证测试
+
+print("=== 算术运算验证 ===");
+
+// 基本算术
+print("2 * 3 =", 2 * 3);
+print("10 - 5 =", 10 - 5);
+print("6 + 5 =", 6 + 5);
+
+// 复合运算
+result = 2 * 3;
+print("step1: 2 * 3 =", result);
+result2 = 10 - 5;
+print("step2: 10 - 5 =", result2);
+result3 = result + result2;
+print("step3:", result, "+", result2, "=", result3);
+
+// 函数中的算术
+const add = (a, b) => a + b;
+const multiply = (a, b) => a * b;
+const subtract = (a, b) => a - b;
+
+print("函数算术测试:");
+print("multiply(2, 3) =", multiply(2, 3));
+print("subtract(10, 5) =", subtract(10, 5));
+print("add(6, 5) =", add(6, 5));

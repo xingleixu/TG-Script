@@ -1,0 +1,73 @@
+// const关键字基础功能测试
+// Basic test for const keyword functionality
+
+print("=== const关键字基础测试 ===");
+
+// 1. 基础const声明和初始化
+print("\n1. 基础const声明测试:");
+
+// 整数常量
+const MAX_SIZE = 100;
+const MIN_SIZE = 1;
+const ZERO = 0;
+
+print("MAX_SIZE =", MAX_SIZE);
+print("MIN_SIZE =", MIN_SIZE);
+print("ZERO =", ZERO);
+
+// 字符串常量
+const APP_NAME = "TG-Script";
+const VERSION = "1.0.0";
+
+print("APP_NAME =", APP_NAME);
+print("VERSION =", VERSION);
+
+// 布尔常量
+const IS_ENABLED = true;
+const IS_DEBUG = false;
+
+print("IS_ENABLED =", IS_ENABLED);
+print("IS_DEBUG =", IS_DEBUG);
+
+// 2. const与函数
+print("\n2. const与函数测试:");
+
+const add = (a, b) => a + b;
+const multiply = (x, y) => x * y;
+const greet = name => "Hello, " + name;
+
+print("add(5, 3) =", add(5, 3));
+print("multiply(4, 7) =", multiply(4, 7));
+print("greet('World') =", greet("World"));
+
+// 3. const在表达式中的使用
+print("\n3. const在表达式中的使用:");
+
+const BASE = 10;
+const MULTIPLIER = 2;
+const result = BASE * MULTIPLIER;
+const sum = BASE + MULTIPLIER + 5;
+
+print("BASE =", BASE);
+print("MULTIPLIER =", MULTIPLIER);
+print("result =", result);
+print("sum =", sum);
+
+// 4. const作用域测试
+print("\n4. const作用域测试:");
+
+const GLOBAL_CONST = "global";
+print("GLOBAL_CONST =", GLOBAL_CONST);
+
+// 在函数中使用const
+const testScope = () => {
+    const LOCAL_CONST = "local";
+    print("LOCAL_CONST in function =", LOCAL_CONST);
+    print("GLOBAL_CONST in function =", GLOBAL_CONST);
+    return LOCAL_CONST;
+};
+
+scopeResult = testScope();
+print("function returned:", scopeResult);
+
+print("\n=== const基础测试完成 ===");

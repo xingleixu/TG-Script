@@ -1,0 +1,6 @@
+// 最简单的数组语法测试
+
+let numbers: int[] = [1, 2, 3];
+let strings: string[] = ["a", "b"];
+
+numbers[0] + 10;

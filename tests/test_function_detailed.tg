@@ -1,0 +1,59 @@
+// 详细的函数测试
+
+// 测试基本算术函数
+function add(a: number, b: number): number {
+    return a + b;
+}
+
+function subtract(a: number, b: number): number {
+    return a - b;
+}
+
+function multiply(a: number, b: number): number {
+    return a * b;
+}
+
+// 测试字符串函数
+function greet(name: string): void {
+    return "Hello, " + name;
+}
+
+// 测试布尔函数
+function isPositive(n: number): void {
+    return n > 0;
+}
+
+// 测试无参数函数
+function getConstant() {
+    return 42;
+}
+
+// 执行测试
+print("=== 算术函数测试 ===");
+let result1 = add(5, 3);
+print("add(5, 3) =", result1);
+
+let result2 = subtract(10, 4);
+print("subtract(10, 4) =", result2);
+
+let result3 = multiply(6, 7);
+print("multiply(6, 7) =", result3);
+
+print("=== 字符串函数测试 ===");
+let result4 = greet("World");
+print("greet('World') =", result4);
+
+print("=== 布尔函数测试 ===");
+let result5 = isPositive(5);
+print("isPositive(5) =", result5);
+
+let result6 = isPositive(-3);
+print("isPositive(-3) =", result6);
+
+print("=== 无参数函数测试 ===");
+let result7 = getConstant();
+print("getConstant() =", result7);
+
+print("=== 嵌套函数调用测试 ===");
+let result8 = add(multiply(2, 3), subtract(10, 5));
+print("add(multiply(2, 3), subtract(10, 5)) =", result8);

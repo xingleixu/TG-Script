@@ -1,0 +1,7 @@
+// 测试无参数箭头函数
+
+print("Testing no-parameter arrow function...");
+const getAnswer = () => 42;
+print("getAnswer function defined");
+let result = getAnswer();
+print("getAnswer() =", result);

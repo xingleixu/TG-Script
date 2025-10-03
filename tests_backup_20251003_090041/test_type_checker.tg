@@ -1,0 +1,34 @@
+// Test type checker functionality
+
+// Variable declarations with type inference
+let x = 42;
+let y = 3.14;
+let name = "Hello";
+let flag = true;
+
+// Array operations
+let numbers = [1, 2, 3];
+let first = numbers[0];
+
+// Type errors (should be caught by type checker)
+// let invalid = x + name;  // mixing number and string
+// let badIndex = numbers["invalid"];  // non-numeric array index
+
+// Function with parameters
+function add(a, b) {
+    return a + b;
+}
+
+// Function calls
+let result = add(10, 20);
+
+// Control flow
+if (flag) {
+    console.log("Flag is true");
+}
+
+for (let i = 0; i < 5; i++) {
+    console.log(i);
+}
+
+console.log("Type checking test completed");

@@ -15,7 +15,7 @@ let first = numbers[0];
 // let badIndex = numbers["invalid"];  // non-numeric array index
 
 // Function with parameters
-function add(a, b) {
+function add(a: number, b: number): number {
     return a + b;
 }
 

@@ -123,6 +123,19 @@ func executeScript(source, filename string) error {
 		return fmt.Errorf("parsing failed")
 	}
 	
+	// Type checking
+	checker := types.NewTypeChecker()
+	typeErrors := checker.Check(program)
+	
+	// Check for type errors
+	if len(typeErrors) > 0 {
+		fmt.Printf("Type errors in %s:\n", filename)
+		for _, err := range typeErrors {
+			fmt.Printf("  %s\n", err.Error())
+		}
+		return fmt.Errorf("type checking failed")
+	}
+	
 	// Compile
 	function, err := compiler.CompileFunction(program)
 	if err != nil {

@@ -59,7 +59,7 @@ function processFloat32(value: float32): float32 {
 // ============================================================================
 
 // 重新赋值相同类型
-int8Val = 127;
-int16Val = 32767;
-float32Val = 2.718;
-float64Val = 2.718281828459045;
+let int8Val = 127;
+let int16Val = 32767;
+let float32Val = 2.718;
+let float64Val = 2.718281828459045;

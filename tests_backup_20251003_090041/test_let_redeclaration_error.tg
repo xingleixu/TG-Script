@@ -1,0 +1,32 @@
+// 测试let变量重复声明错误检测
+// 这个文件应该产生E013错误
+
+// 测试1: 同一作用域中的let重复声明
+let x = "first";
+let x = "second";  // 应该报告E013错误
+
+// 测试2: 多个重复声明
+let y = "value1";
+let y = "value2";  // 应该报告E013错误
+let y = "value3";  // 应该报告E013错误
+
+// 测试3: 块作用域中的重复声明
+{
+    let z = "block1";
+    let z = "block2";  // 应该报告E013错误
+}
+
+// 测试4: 不同声明类型的混合（这些应该是允许的）
+var a = "var";
+let a = "let";     // 这应该是允许的，因为var和let可以混合
+
+const b = "const";
+let b = "let";     // 这应该是允许的，因为const和let可以混合
+
+// 测试5: 不同作用域中的let声明（这些应该是允许的）
+let global = "global";
+{
+    let global = "local";  // 这应该是允许的，因为在不同作用域
+}
+
+print("测试完成");

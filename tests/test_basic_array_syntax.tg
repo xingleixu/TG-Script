@@ -1,0 +1,26 @@
+// 测试基本的新数组语法 elementType[]
+
+// 基本类型数组
+let intArray: int[] = [1, 2, 3];
+let stringArray: string[] = ["hello", "world"];
+let boolArray: boolean[] = [true, false];
+
+// 简单的函数测试
+function getFirst(arr: int[]): int {
+    return arr[0];
+}
+
+function createStrings(): string[] {
+    return ["test", "array"];
+}
+
+// 测试函数调用
+let first = getFirst(intArray);
+let newArray = createStrings();
+
+// 数组访问
+let element = intArray[1];
+let str = stringArray[0];
+
+// 返回结果
+first + element;

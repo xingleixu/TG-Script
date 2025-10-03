@@ -1,0 +1,36 @@
+// AnyType behavior test - focusing on type checking
+
+// Test 1: Unannotated function parameters should be AnyType
+function add(a, b) {
+    return a + b;
+}
+
+// Test 2: AnyType should work with numbers
+let result1 = add(1, 2);
+print("Number addition:", result1);
+
+// Test 3: AnyType should work with strings
+let result2 = add("Hello", " World");
+print("String concatenation:", result2);
+
+// Test 4: Arrow functions with unannotated parameters
+const multiply = (x, y) => x * y;
+let result3 = multiply(3, 4);
+print("Arrow function:", result3);
+
+// Test 5: Unary operations on AnyType
+function negate(x) {
+    return -x;
+}
+let result4 = negate(10);
+print("Unary operation:", result4);
+
+// Test 6: Assignment compatibility
+function process(value) {
+    let temp = value;
+    return temp;
+}
+let result5 = process("test");
+print("Assignment:", result5);
+
+print("Type checking tests completed successfully!");

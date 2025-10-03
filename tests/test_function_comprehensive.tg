@@ -1,0 +1,39 @@
+// 综合函数功能测试
+
+// 1. 基本函数声明
+function add(a: int, b: int): int {
+    return a + b;
+}
+
+function greet(name: string): string {
+    return "Hello, " + name;
+}
+
+function isEven(n: int): bool {
+    return n % 2 == 0;
+}
+
+// 2. 无参数函数
+function getRandomNumber(): int {
+    return 42;
+}
+
+// 3. 无返回值函数
+function printMessage(msg: string): void {
+    let temp: string = msg;
+}
+
+// 4. 多参数函数
+function calculateArea(width: int, height: int, depth: int): int {
+    return width * height * depth;
+}
+
+// 5. 函数调用测试
+let result1: int = add(5, 3);
+let result2: string = greet("World");
+let result3: bool = isEven(4);
+let result4: int = getRandomNumber();
+let result5: int = calculateArea(2, 3, 4);
+
+// 6. 嵌套函数调用
+let result6: bool = isEven(add(2, 3));

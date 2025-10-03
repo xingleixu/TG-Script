@@ -1,0 +1,6 @@
+function getValue() {
+    return 42;
+}
+
+var result = getValue();
+print("result =", result);

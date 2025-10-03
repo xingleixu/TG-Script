@@ -1,0 +1,7 @@
+// 测试字符串箭头函数
+
+print("Testing string arrow function...");
+const greet = name => "Hello, " + name;
+print("greet function defined");
+let result = greet("Arrow");
+print("greet('Arrow') =", result);

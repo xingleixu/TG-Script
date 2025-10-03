@@ -1,0 +1,86 @@
+// const关键字全面功能测试
+// Comprehensive test for const keyword functionality
+
+print("=== const关键字功能测试 ===");
+
+// 1. 基础const声明和初始化
+print("\n1. 基础const声明测试:");
+
+// 数字常量
+const PI = 3.14159;
+const MAX_SIZE = 100;
+const ZERO = 0;
+
+print("PI =", PI);
+print("MAX_SIZE =", MAX_SIZE);
+print("ZERO =", ZERO);
+
+// 字符串常量
+const APP_NAME = "TG-Script";
+const VERSION = "1.0.0";
+const EMPTY_STRING = "";
+
+print("APP_NAME =", APP_NAME);
+print("VERSION =", VERSION);
+print("EMPTY_STRING =", EMPTY_STRING);
+
+// 布尔常量
+const IS_ENABLED = true;
+const IS_DEBUG = false;
+
+print("IS_ENABLED =", IS_ENABLED);
+print("IS_DEBUG =", IS_DEBUG);
+
+// 2. const与函数
+print("\n2. const与函数测试:");
+
+const add = (a, b) => a + b;
+const multiply = (x, y) => x * y;
+const greet = name => "Hello, " + name;
+
+print("add(5, 3) =", add(5, 3));
+print("multiply(4, 7) =", multiply(4, 7));
+print("greet('World') =", greet("World"));
+
+// 3. const在表达式中的使用
+print("\n3. const在表达式中的使用:");
+
+const RADIUS = 5;
+const area = PI * RADIUS * RADIUS;
+const circumference = 2 * PI * RADIUS;
+
+print("RADIUS =", RADIUS);
+print("area =", area);
+print("circumference =", circumference);
+
+// 4. const与复杂表达式
+print("\n4. const与复杂表达式:");
+
+const BASE = 10;
+const EXPONENT = 2;
+const power = BASE * BASE; // 模拟幂运算
+const sum = BASE + EXPONENT + PI;
+
+print("BASE =", BASE);
+print("EXPONENT =", EXPONENT);
+print("power =", power);
+print("sum =", sum);
+
+// 5. const作用域测试
+print("\n5. const作用域测试:");
+
+const GLOBAL_CONST = "global";
+print("GLOBAL_CONST =", GLOBAL_CONST);
+
+// 在函数中使用const
+const testScope = () => {
+    const LOCAL_CONST = "local";
+    print("LOCAL_CONST in function =", LOCAL_CONST);
+    print("GLOBAL_CONST in function =", GLOBAL_CONST);
+    return LOCAL_CONST;
+};
+
+result = testScope();
+print("function returned:", result);
+
+print("\n=== const功能测试完成 ===");

@@ -1,0 +1,5 @@
+// 简单的ASI测试
+let a = 10
+let b = 20
+print("a =", a)
+print("b =", b)

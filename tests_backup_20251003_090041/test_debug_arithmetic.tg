@@ -1,0 +1,16 @@
+// Debug arithmetic operations
+print("Testing direct arithmetic:");
+print("2 + 3 =", 2 + 3);
+print("5 - 2 =", 5 - 2);
+print("3 * 4 =", 3 * 4);
+
+print("\nTesting arithmetic in function:");
+function testAdd(a, b) {
+    print("Inside function: a =", a, "b =", b);
+    let result = a + b;
+    print("Inside function: result =", result);
+    return result;
+}
+
+let sum = testAdd(2, 3);
+print("Function returned:", sum);

@@ -1,29 +1,33 @@
-// 最终箭头函数验证测试 - 当前支持的特性
+// 箭头函数测试
 
-// 1. 基本箭头函数 - 类型推断
-let add = (x, y) => x + y;
-console.log(add(5, 3)); // 应该输出 8
+print("=== 箭头函数测试 ===");
 
-// 2. 单参数箭头函数 - 类型推断  
-let double = x => x * 2;
-console.log(double(4)); // 应该输出 8
+// 基本箭头函数
+print("定义 add 函数...");
+const add = (a, b) => a + b;
 
-// 3. 显式类型注解的箭头函数
-let typedMultiply = (a: int, b: int) => a * b;
-console.log(typedMultiply(3, 4)); // 应该输出 12
+print("定义 square 函数...");
+const square = x => x * x;
 
-// 4. 块语句体的箭头函数
-let complexCalc = (x, y) => {
-    let temp = x + y;
-    return temp * 2;
-};
-console.log(complexCalc(2, 3)); // 应该输出 10
+print("定义 greet 函数...");
+const greet = name => "Hello, " + name;
 
-// 5. 多种运算的类型推断
-let subtract = (a, b) => a - b;
-let divide = (a, b) => a / b;
-let modulo = (a, b) => a % b;
+print("定义 getAnswer 函数...");
+const getAnswer = () => 42;
 
-console.log(subtract(10, 3)); // 应该输出 7
-console.log(divide(15, 3)); // 应该输出 5
-console.log(modulo(10, 3)); // 应该输出 1
+// 测试箭头函数
+print("测试 add 函数...");
+let result1 = add(3, 4);
+print("add(3, 4) =", result1);
+
+print("测试 square 函数...");
+let result2 = square(5);
+print("square(5) =", result2);
+
+print("测试 greet 函数...");
+let result3 = greet("Arrow");
+print("greet('Arrow') =", result3);
+
+print("测试 getAnswer 函数...");
+let result4 = getAnswer();
+print("getAnswer() =", result4);

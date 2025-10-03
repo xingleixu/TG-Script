@@ -1,0 +1,4 @@
+// 简单的let重复声明测试
+let x = "first";
+let x = "second";
+print(x);

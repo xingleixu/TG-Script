@@ -89,10 +89,10 @@ function processInt64(value: int64): int64 {
 // ============================================================================
 
 let mutableInt8: int8 = 50;
-mutableInt8 = 75;
+let mutableInt8 = 75;
 
 let mutableFloat32: float32 = 1.0;
-mutableFloat32 = 2.5;
+let mutableFloat32 = 2.5;
 
 // ============================================================================
 // 比较运算测试

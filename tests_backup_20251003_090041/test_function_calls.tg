@@ -1,0 +1,28 @@
+// 测试函数调用的类型检查
+
+// 定义一些函数
+function add(a: int, b: int): int {
+    return a + b;
+}
+
+function multiply(x: float, y: float): float {
+    return x * y;
+}
+
+function greet(name: string): string {
+    return "Hello, " + name;
+}
+
+// 正确的函数调用
+let sum = add(5, 10);
+let product = multiply(3.14, 2.0);
+let greeting = greet("World");
+
+// 错误的函数调用（参数类型不匹配）
+let wrongSum = add(5.5, 10);  // 应该报错：float不能传给int参数
+let wrongProduct = multiply(5, 10);  // 应该报错：int不能传给float参数
+let wrongGreeting = greet(123);  // 应该报错：int不能传给string参数
+
+// 错误的函数调用（参数数量不匹配）
+let tooFewArgs = add(5);  // 应该报错：参数数量不足
+let tooManyArgs = add(5, 10, 15);  // 应该报错：参数数量过多
