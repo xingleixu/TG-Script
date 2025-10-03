@@ -796,10 +796,16 @@ func (c *Compiler) compileForStatement(stmt *ast.ForStatement) error {
 			return err
 		}
 		
-		// Test condition and jump if false
-		c.Emit(vm.OpTest, condReg)
+		// Negate the condition and test
+		// OpTest skips next instruction if condition is truthy
+		// We want to jump to end when condition is falsy
+		// So we use OpNot to negate the condition first
+		notReg := c.AllocateRegister()
+		c.Emit(vm.OpNot, notReg, condReg)
+		c.Emit(vm.OpTest, notReg)
 		jumpToEnd = c.Emit(vm.OpJmp, 0) // placeholder
 		c.FreeRegister(condReg)
+		c.FreeRegister(notReg)
 	}
 	
 	// Compile body
@@ -817,8 +823,8 @@ func (c *Compiler) compileForStatement(stmt *ast.ForStatement) error {
 	}
 	
 	// Jump back to loop start
-	offset := loopStart - (len(c.instructions) + 1)
-	c.Emit(vm.OpJmp, offset + vm.BxOffset)
+	jumpBackPos := c.Emit(vm.OpJmp, 0) // placeholder
+	c.PatchJump(jumpBackPos, loopStart)
 	
 	// Patch jump to end if test condition exists
 	if stmt.Test != nil {
@@ -839,10 +845,16 @@ func (c *Compiler) compileWhileStatement(stmt *ast.WhileStatement) error {
 		return err
 	}
 	
-	// Test condition and jump if false
-	c.Emit(vm.OpTest, condReg)
-	jumpToEnd := c.Emit(vm.OpJmp, 0) // placeholder
+	// Negate the condition and test
+	// OpTest skips next instruction if condition is truthy
+	// We want to jump to end when condition is falsy
+	// So we use OpNot to negate the condition first
+	notReg := c.AllocateRegister()
+	c.Emit(vm.OpNot, notReg, condReg)
+	c.Emit(vm.OpTest, notReg)
+	jumpToEnd := c.Emit(vm.OpJmp, 0) // placeholder - jump to end if condition is false
 	c.FreeRegister(condReg)
+	c.FreeRegister(notReg)
 	
 	// Compile body
 	if err := c.compileStatement(stmt.Body); err != nil {
@@ -850,8 +862,8 @@ func (c *Compiler) compileWhileStatement(stmt *ast.WhileStatement) error {
 	}
 	
 	// Jump back to loop start
-	offset := loopStart - (len(c.instructions) + 1)
-	c.Emit(vm.OpJmp, offset + vm.BxOffset)
+	jumpBackPos := c.Emit(vm.OpJmp, 0) // placeholder
+	c.PatchJump(jumpBackPos, loopStart)
 	
 	// Patch jump to end
 	c.PatchJump(jumpToEnd, len(c.instructions))
