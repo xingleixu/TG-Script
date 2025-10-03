@@ -1,0 +1,21 @@
+// 测试let变量的有效使用情况
+let x = "10"
+print("x = " + x)
+
+// 不同作用域中的let声明应该是允许的
+{
+    let x = "20"  // 这应该是允许的，因为在不同的作用域
+    print("inner x = " + x)
+}
+
+// var和let混合声明应该是允许的
+var y = "30"
+let z = "40"
+print("y = " + y)
+print("z = " + z)
+
+// const和let混合声明应该是允许的
+const a = "50"
+let b = "60"
+print("a = " + a)
+print("b = " + b)

@@ -9,11 +9,12 @@ import (
 
 // Symbol represents a symbol in the symbol table
 type Symbol struct {
-	Name     string
-	Type     Type
-	Kind     SymbolKind
-	Position lexer.Position
-	Scope    *Scope
+	Name            string
+	Type            Type
+	Kind            SymbolKind
+	DeclarationKind lexer.Token // LET, CONST, VAR for variables
+	Position        lexer.Position
+	Scope           *Scope
 }
 
 type SymbolKind int
@@ -159,11 +160,17 @@ func (r *Resolver) ExitScope() {
 
 // Define defines a symbol in the current scope
 func (r *Resolver) Define(name string, typ Type, kind SymbolKind, pos lexer.Position) error {
+	return r.DefineWithDeclarationKind(name, typ, kind, lexer.ILLEGAL, pos)
+}
+
+// DefineWithDeclarationKind defines a symbol with declaration kind (const, let, var)
+func (r *Resolver) DefineWithDeclarationKind(name string, typ Type, kind SymbolKind, declKind lexer.Token, pos lexer.Position) error {
 	symbol := &Symbol{
-		Name:     name,
-		Type:     typ,
-		Kind:     kind,
-		Position: pos,
+		Name:            name,
+		Type:            typ,
+		Kind:            kind,
+		DeclarationKind: declKind,
+		Position:        pos,
 	}
 	
 	err := r.currentScope.Define(name, symbol)
@@ -177,6 +184,11 @@ func (r *Resolver) Define(name string, typ Type, kind SymbolKind, pos lexer.Posi
 // Lookup looks up a symbol
 func (r *Resolver) Lookup(name string) (*Symbol, bool) {
 	return r.currentScope.Lookup(name)
+}
+
+// LookupLocal looks up a symbol only in the current scope
+func (r *Resolver) LookupLocal(name string) (*Symbol, bool) {
+	return r.currentScope.LookupLocal(name)
 }
 
 // UpdateType updates the type of an existing symbol
@@ -236,7 +248,25 @@ func (r *Resolver) resolveVariableDeclaration(stmt *ast.VariableDeclaration) {
 		// For now, we'll use a simple approach for variable names
 		// In a full implementation, we'd need to handle destructuring patterns
 		if id, ok := decl.Id.(*ast.Identifier); ok {
-			r.Define(id.Name, UndefinedType, VariableSymbol, id.NamePos)
+			// Check for let redeclaration in the same scope
+			if stmt.Kind == lexer.LET {
+				if symbol, exists := r.currentScope.LookupLocal(id.Name); exists {
+					// Only report error if the existing symbol is also a let variable
+					if symbol.DeclarationKind == lexer.LET {
+						typeErr := &TypeError{
+							Position:   id.NamePos,
+							Message:    fmt.Sprintf("Identifier '%s' has already been declared", id.Name),
+							Code:       LetRedeclarationError,
+							Suggestion: "Use a different variable name or remove the duplicate declaration",
+							Context:    fmt.Sprintf("Previous declaration was at line %d", symbol.Position.Line),
+						}
+						r.addError(typeErr)
+						continue // Skip defining this variable
+					}
+				}
+			}
+			
+			r.DefineWithDeclarationKind(id.Name, UndefinedType, VariableSymbol, stmt.Kind, id.NamePos)
 		}
 	}
 }

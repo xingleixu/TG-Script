@@ -24,6 +24,7 @@ const (
 	ArgumentCountMismatchError   ErrorCode = "E010"
 	ConstReassignmentError       ErrorCode = "E011"
 	ArrowFunctionAssignmentError ErrorCode = "E012"
+	LetRedeclarationError        ErrorCode = "E013"
 )
 
 type TypeError struct {
@@ -75,6 +76,15 @@ func (tc *TypeChecker) Check(program *ast.Program) []*TypeError {
 
 	// First pass: resolve symbols and build symbol table
 	tc.resolver.ResolveProgram(program)
+
+	// Check for resolver errors and convert them to TypeError
+	if resolverErrors := tc.resolver.GetErrors(); len(resolverErrors) > 0 {
+		for _, err := range resolverErrors {
+			if typeErr, ok := err.(*TypeError); ok {
+				tc.errors = append(tc.errors, typeErr)
+			}
+		}
+	}
 
 	// Second pass: type check all statements
 	for _, stmt := range program.Body {
