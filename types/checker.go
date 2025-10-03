@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+
 	"github.com/xingleixu/TG-Script/ast"
 	"github.com/xingleixu/TG-Script/lexer"
 )
@@ -11,16 +12,18 @@ import (
 type ErrorCode string
 
 const (
-	UndefinedIdentifierError    ErrorCode = "E001"
-	TypeMismatchError          ErrorCode = "E002"
-	InvalidOperatorError       ErrorCode = "E003"
-	InvalidCallError           ErrorCode = "E004"
-	InvalidAssignmentError     ErrorCode = "E005"
-	InvalidMemberAccessError   ErrorCode = "E006"
-	InvalidArrayElementError   ErrorCode = "E007"
-	InvalidReturnTypeError     ErrorCode = "E008"
-	InvalidConditionError      ErrorCode = "E009"
-	ArgumentCountMismatchError ErrorCode = "E010"
+	UndefinedIdentifierError     ErrorCode = "E001"
+	TypeMismatchError            ErrorCode = "E002"
+	InvalidOperatorError         ErrorCode = "E003"
+	InvalidCallError             ErrorCode = "E004"
+	InvalidAssignmentError       ErrorCode = "E005"
+	InvalidMemberAccessError     ErrorCode = "E006"
+	InvalidArrayElementError     ErrorCode = "E007"
+	InvalidReturnTypeError       ErrorCode = "E008"
+	InvalidConditionError        ErrorCode = "E009"
+	ArgumentCountMismatchError   ErrorCode = "E010"
+	ConstReassignmentError       ErrorCode = "E011"
+	ArrowFunctionAssignmentError ErrorCode = "E012"
 )
 
 type TypeError struct {
@@ -32,25 +35,25 @@ type TypeError struct {
 }
 
 func (e *TypeError) Error() string {
-	result := fmt.Sprintf("[%s] Type error at line %d, column %d: %s", 
+	result := fmt.Sprintf("[%s] Type error at line %d, column %d: %s",
 		e.Code, e.Position.Line, e.Position.Column, e.Message)
-	
+
 	if e.Context != "" {
 		result += fmt.Sprintf("\n  Context: %s", e.Context)
 	}
-	
+
 	if e.Suggestion != "" {
 		result += fmt.Sprintf("\n  Suggestion: %s", e.Suggestion)
 	}
-	
+
 	return result
 }
 
 // TypeChecker performs static type checking
 type TypeChecker struct {
-	resolver  *Resolver
-	inferrer  *TypeInferrer
-	errors    []*TypeError
+	resolver   *Resolver
+	inferrer   *TypeInferrer
+	errors     []*TypeError
 	strictMode bool
 }
 
@@ -58,7 +61,7 @@ type TypeChecker struct {
 func NewTypeChecker() *TypeChecker {
 	resolver := NewResolver()
 	inferrer := NewTypeInferrer(resolver)
-	
+
 	return &TypeChecker{
 		resolver:   resolver,
 		inferrer:   inferrer,
@@ -69,15 +72,15 @@ func NewTypeChecker() *TypeChecker {
 // Check performs type checking on a program
 func (tc *TypeChecker) Check(program *ast.Program) []*TypeError {
 	tc.errors = nil
-	
+
 	// First pass: resolve symbols and build symbol table
 	tc.resolver.ResolveProgram(program)
-	
+
 	// Second pass: type check all statements
 	for _, stmt := range program.Body {
 		tc.checkStatement(stmt)
 	}
-	
+
 	return tc.errors
 }
 
@@ -108,28 +111,43 @@ func (tc *TypeChecker) checkVariableDeclaration(decl *ast.VariableDeclaration) {
 	for _, declarator := range decl.Declarations {
 		var declaredType Type = UndefinedType
 		var finalType Type = UndefinedType
-		
+
 		// Check if there's a type annotation
 		if declarator.TypeAnnotation != nil {
 			declaredType = tc.resolveTypeAnnotation(declarator.TypeAnnotation)
 		}
-		
+
 		// Check initializer if present
 		if declarator.Init != nil {
 			initType := tc.checkExpression(declarator.Init)
-	
-			
+
+			// Check if arrow function is assigned to non-const variable
+			if _, isArrowFunction := declarator.Init.(*ast.ArrowFunctionExpression); isArrowFunction {
+				if decl.Kind != lexer.CONST {
+					if id, ok := declarator.Id.(*ast.Identifier); ok {
+						tc.addDetailedError(
+							declarator.Init.Pos(),
+							fmt.Sprintf("Arrow functions can only be assigned to 'const' variables, not '%s'", decl.Kind.String()),
+							ArrowFunctionAssignmentError,
+							"Change the variable declaration to 'const' to ensure arrow function immutability",
+							fmt.Sprintf("Arrow function assigned to '%s' variable '%s' - this violates immutability requirements",
+								decl.Kind.String(), id.Name),
+						)
+					}
+				}
+			}
+
 			// If we have both type annotation and initializer, check compatibility
 			if declarator.TypeAnnotation != nil {
 				if !tc.isAssignable(initType, declaredType) {
 					tc.addDetailedError(
 						declarator.Init.Pos(),
-						fmt.Sprintf("Cannot assign value of type '%s' to variable of type '%s'", 
+						fmt.Sprintf("Cannot assign value of type '%s' to variable of type '%s'",
 							initType.String(), declaredType.String()),
 						TypeMismatchError,
-						fmt.Sprintf("Change the initializer to match type '%s' or remove the type annotation to allow type inference", 
+						fmt.Sprintf("Change the initializer to match type '%s' or remove the type annotation to allow type inference",
 							declaredType.String()),
-						fmt.Sprintf("Variable '%s' is declared with type '%s' but initialized with incompatible type '%s'", 
+						fmt.Sprintf("Variable '%s' is declared with type '%s' but initialized with incompatible type '%s'",
 							declarator.Id.String(), declaredType.String(), initType.String()),
 					)
 				}
@@ -137,7 +155,7 @@ func (tc *TypeChecker) checkVariableDeclaration(decl *ast.VariableDeclaration) {
 			} else {
 				// No type annotation, infer type from initializer
 				finalType = initType
-		
+
 			}
 		} else if declarator.TypeAnnotation == nil {
 			// No type annotation and no initializer - this should be an error in strict mode
@@ -154,12 +172,12 @@ func (tc *TypeChecker) checkVariableDeclaration(decl *ast.VariableDeclaration) {
 		} else {
 			finalType = declaredType
 		}
-		
+
 		// Update variable type in symbol table (it was already defined during resolution)
 		if id, ok := declarator.Id.(*ast.Identifier); ok {
 			if err := tc.resolver.UpdateType(id.Name, finalType); err != nil {
 				// If update fails, try to define it (fallback)
-				tc.resolver.Define(id.Name, finalType, VariableSymbol, id.Pos())
+				tc.resolver.DefineWithDeclarationKind(id.Name, finalType, VariableSymbol, decl.Kind, id.Pos())
 			}
 		}
 	}
@@ -170,7 +188,7 @@ func (tc *TypeChecker) checkFunctionDeclaration(decl *ast.FunctionDeclaration) {
 	// Enter function scope
 	tc.resolver.EnterScope()
 	defer tc.resolver.ExitScope()
-	
+
 	// Add parameters to scope
 	for _, param := range decl.Parameters {
 		var paramType Type = UndefinedType
@@ -179,12 +197,12 @@ func (tc *TypeChecker) checkFunctionDeclaration(decl *ast.FunctionDeclaration) {
 		}
 		tc.resolver.Define(param.Name.Name, paramType, ParameterSymbol, param.Name.Pos())
 	}
-	
+
 	// Check function body
 	if decl.Body != nil {
 		tc.checkBlockStatement(decl.Body)
 	}
-	
+
 	// TODO: Check return type compatibility
 }
 
@@ -216,9 +234,9 @@ func (tc *TypeChecker) checkExpression(expr ast.Expression) Type {
 func (tc *TypeChecker) checkBinaryExpression(expr *ast.BinaryExpression) Type {
 	leftType := tc.checkExpression(expr.Left)
 	rightType := tc.checkExpression(expr.Right)
-	
+
 	operator := expr.Operator.String()
-	
+
 	// Type compatibility checks
 	switch operator {
 	case "+":
@@ -234,14 +252,14 @@ func (tc *TypeChecker) checkBinaryExpression(expr *ast.BinaryExpression) Type {
 		}
 		suggestion := fmt.Sprintf("Use numeric types (int or float) with operator '%s'", operator)
 		context := fmt.Sprintf("Left operand: %s, Right operand: %s", leftType.String(), rightType.String())
-		tc.addDetailedError(expr.Pos(), 
+		tc.addDetailedError(expr.Pos(),
 			fmt.Sprintf("Cannot apply operator '%s' to types '%s' and '%s'",
 				operator, leftType.String(), rightType.String()),
 			InvalidOperatorError,
 			suggestion,
 			context)
 		return UndefinedType
-		
+
 	case "-", "*", "/", "%":
 		if !IsNumericType(leftType) || !IsNumericType(rightType) {
 			suggestion := fmt.Sprintf("Convert operands to numeric types (int or float) before using '%s'", operator)
@@ -258,11 +276,11 @@ func (tc *TypeChecker) checkBinaryExpression(expr *ast.BinaryExpression) Type {
 			return FloatType
 		}
 		return IntType
-		
+
 	case "==", "!=":
 		// Allow comparison of any types
 		return BooleanType
-		
+
 	case "<", ">", "<=", ">=":
 		if !IsNumericType(leftType) || !IsNumericType(rightType) {
 			suggestion := "Use numeric types (int or float) for comparison operations"
@@ -275,10 +293,10 @@ func (tc *TypeChecker) checkBinaryExpression(expr *ast.BinaryExpression) Type {
 				context)
 		}
 		return BooleanType
-		
+
 	case "&&", "||":
 		return BooleanType
-		
+
 	default:
 		return tc.inferrer.InferType(expr)
 	}
@@ -288,7 +306,7 @@ func (tc *TypeChecker) checkBinaryExpression(expr *ast.BinaryExpression) Type {
 func (tc *TypeChecker) checkUnaryExpression(expr *ast.UnaryExpression) Type {
 	operandType := tc.checkExpression(expr.Operand)
 	operator := expr.Operator.String()
-	
+
 	switch operator {
 	case "+", "-":
 		if !IsNumericType(operandType) {
@@ -303,10 +321,10 @@ func (tc *TypeChecker) checkUnaryExpression(expr *ast.UnaryExpression) Type {
 			return UndefinedType
 		}
 		return operandType
-		
+
 	case "!":
 		return BooleanType
-		
+
 	case "++", "--":
 		if !IsNumericType(operandType) {
 			suggestion := fmt.Sprintf("Use numeric types (int or float) with operator '%s'", operator)
@@ -320,7 +338,7 @@ func (tc *TypeChecker) checkUnaryExpression(expr *ast.UnaryExpression) Type {
 			return UndefinedType
 		}
 		return operandType
-		
+
 	default:
 		return tc.inferrer.InferType(expr)
 	}
@@ -329,7 +347,7 @@ func (tc *TypeChecker) checkUnaryExpression(expr *ast.UnaryExpression) Type {
 // checkCallExpression type checks a call expression
 func (tc *TypeChecker) checkCallExpression(expr *ast.CallExpression) Type {
 	calleeType := tc.checkExpression(expr.Callee)
-	
+
 	if funcType, ok := calleeType.(*FunctionType); ok {
 		// Check argument count for non-variadic functions
 		if !funcType.Variadic {
@@ -356,11 +374,11 @@ func (tc *TypeChecker) checkCallExpression(expr *ast.CallExpression) Type {
 					context)
 			}
 		}
-		
+
 		// Check argument types
 		for i, arg := range expr.Arguments {
 			argType := tc.checkExpression(arg)
-			
+
 			if i < len(funcType.Parameters) {
 				// Check regular parameters
 				expectedType := funcType.Parameters[i]
@@ -380,10 +398,10 @@ func (tc *TypeChecker) checkCallExpression(expr *ast.CallExpression) Type {
 				continue
 			}
 		}
-		
+
 		return funcType.ReturnType
 	}
-	
+
 	suggestion := "Ensure the expression evaluates to a function before calling it"
 	context := fmt.Sprintf("Attempting to call expression of type '%s'", calleeType.String())
 	tc.addDetailedError(expr.Pos(),
@@ -403,20 +421,20 @@ func (tc *TypeChecker) checkIdentifier(expr *ast.Identifier) Type {
 	if tc.strictMode {
 		suggestion := fmt.Sprintf("Declare '%s' before using it, or check for typos", expr.Name)
 		context := fmt.Sprintf("Identifier '%s' is not defined in the current scope", expr.Name)
-		tc.addDetailedError(expr.Pos(), 
+		tc.addDetailedError(expr.Pos(),
 			fmt.Sprintf("Undefined identifier '%s'", expr.Name),
 			UndefinedIdentifierError,
 			suggestion,
 			context)
 	}
-	
+
 	return UndefinedType
 }
 
 // checkMemberExpression type checks a member expression
 func (tc *TypeChecker) checkMemberExpression(expr *ast.MemberExpression) Type {
 	objectType := tc.checkExpression(expr.Object)
-	
+
 	if arrayType, ok := objectType.(*ArrayType); ok {
 		if expr.Computed {
 			// Check index type
@@ -433,7 +451,7 @@ func (tc *TypeChecker) checkMemberExpression(expr *ast.MemberExpression) Type {
 			return arrayType.ElementType
 		}
 	}
-	
+
 	// Handle object property access
 	if objType, ok := objectType.(*ObjectType); ok {
 		if !expr.Computed {
@@ -468,7 +486,7 @@ func (tc *TypeChecker) checkMemberExpression(expr *ast.MemberExpression) Type {
 			return UndefinedType
 		}
 	}
-	
+
 	return UndefinedType
 }
 
@@ -476,7 +494,23 @@ func (tc *TypeChecker) checkMemberExpression(expr *ast.MemberExpression) Type {
 func (tc *TypeChecker) checkAssignmentExpression(expr *ast.AssignmentExpression) Type {
 	leftType := tc.checkExpression(expr.Left)
 	rightType := tc.checkExpression(expr.Right)
-	
+
+	// Check if we're trying to reassign a const variable
+	if id, ok := expr.Left.(*ast.Identifier); ok {
+		if symbol, exists := tc.resolver.Lookup(id.Name); exists {
+			if symbol.DeclarationKind == lexer.CONST {
+				suggestion := "Use 'let' or 'var' instead of 'const' if you need to reassign the variable"
+				context := fmt.Sprintf("Variable '%s' was declared with 'const' and cannot be reassigned", id.Name)
+				tc.addDetailedError(expr.Pos(),
+					fmt.Sprintf("Cannot assign to const variable '%s'", id.Name),
+					ConstReassignmentError,
+					suggestion,
+					context)
+				return rightType
+			}
+		}
+	}
+
 	if !tc.isAssignable(rightType, leftType) {
 		suggestion := fmt.Sprintf("Convert the value to type '%s' or change the variable type", leftType.String())
 		context := fmt.Sprintf("Assigning value of type '%s' to variable of type '%s'", rightType.String(), leftType.String())
@@ -487,7 +521,7 @@ func (tc *TypeChecker) checkAssignmentExpression(expr *ast.AssignmentExpression)
 			suggestion,
 			context)
 	}
-	
+
 	return rightType
 }
 
@@ -496,7 +530,7 @@ func (tc *TypeChecker) checkArrayLiteral(expr *ast.ArrayLiteral) Type {
 	if len(expr.Elements) == 0 {
 		return NewArrayType(UndefinedType)
 	}
-	
+
 	// Check all elements and find common type
 	var elementType Type
 	for i, element := range expr.Elements {
@@ -518,26 +552,25 @@ func (tc *TypeChecker) checkArrayLiteral(expr *ast.ArrayLiteral) Type {
 			}
 		}
 	}
-	
+
 	if elementType == nil {
 		elementType = UndefinedType
 	}
-	
+
 	return NewArrayType(elementType)
 }
 
 // checkArrowFunctionExpression type checks an arrow function expression
 func (tc *TypeChecker) checkArrowFunctionExpression(expr *ast.ArrowFunctionExpression) Type {
 
-	
 	// Enter function scope
 	tc.resolver.EnterScope()
 	defer tc.resolver.ExitScope()
-	
+
 	// Process parameters and build parameter types
 	var paramTypes []Type
 	var paramsNeedInference []int // Track which parameters need type inference
-	
+
 	for i, param := range expr.Parameters {
 		var paramType Type = UndefinedType
 		if param.TypeAnnotation != nil {
@@ -548,13 +581,13 @@ func (tc *TypeChecker) checkArrowFunctionExpression(expr *ast.ArrowFunctionExpre
 		paramTypes = append(paramTypes, paramType)
 		tc.resolver.Define(param.Name.Name, paramType, ParameterSymbol, param.Name.Pos())
 	}
-	
+
 	// Determine return type
 	var returnType Type = UndefinedType
 	if expr.ReturnType != nil {
 		returnType = tc.resolveTypeAnnotation(expr.ReturnType)
 	}
-	
+
 	// Perform type inference for parameters that need it first
 	if len(paramsNeedInference) > 0 {
 		for _, paramIndex := range paramsNeedInference {
@@ -572,13 +605,13 @@ func (tc *TypeChecker) checkArrowFunctionExpression(expr *ast.ArrowFunctionExpre
 			}
 		}
 	}
-	
+
 	// Check function body after parameter type inference
 	if expr.Body != nil {
 		switch body := expr.Body.(type) {
 		case *ast.BlockStatement:
 			tc.checkBlockStatement(body)
-			
+
 			// For arrow functions with expression bodies (wrapped in BlockStatement with ReturnStatement),
 			// we need to infer the return type from the return statement
 			if returnType == UndefinedType && len(body.Body) == 1 {
@@ -610,7 +643,7 @@ func (tc *TypeChecker) checkArrowFunctionExpression(expr *ast.ArrowFunctionExpre
 			}
 		}
 	}
-	
+
 	// Create and return function type
 	funcType := &FunctionType{
 		Parameters: paramTypes,
@@ -624,7 +657,7 @@ func (tc *TypeChecker) checkArrowFunctionExpression(expr *ast.ArrowFunctionExpre
 func (tc *TypeChecker) checkBlockStatement(stmt *ast.BlockStatement) {
 	tc.resolver.EnterScope()
 	defer tc.resolver.ExitScope()
-	
+
 	for _, s := range stmt.Body {
 		tc.checkStatement(s)
 	}
@@ -643,10 +676,10 @@ func (tc *TypeChecker) checkIfStatement(stmt *ast.IfStatement) {
 			suggestion,
 			context)
 	}
-	
+
 	// Check consequent
 	tc.checkStatement(stmt.Consequent)
-	
+
 	// Check alternate if present
 	if stmt.Alternate != nil {
 		tc.checkStatement(stmt.Alternate)
@@ -666,7 +699,7 @@ func (tc *TypeChecker) checkWhileStatement(stmt *ast.WhileStatement) {
 			suggestion,
 			context)
 	}
-	
+
 	// Check body
 	tc.checkStatement(stmt.Body)
 }
@@ -675,12 +708,12 @@ func (tc *TypeChecker) checkWhileStatement(stmt *ast.WhileStatement) {
 func (tc *TypeChecker) checkForStatement(stmt *ast.ForStatement) {
 	tc.resolver.EnterScope()
 	defer tc.resolver.ExitScope()
-	
+
 	// Check init
 	if stmt.Init != nil {
 		tc.checkStatement(stmt.Init)
 	}
-	
+
 	// Check test
 	if stmt.Test != nil {
 		condType := tc.checkExpression(stmt.Test)
@@ -694,12 +727,12 @@ func (tc *TypeChecker) checkForStatement(stmt *ast.ForStatement) {
 				context)
 		}
 	}
-	
+
 	// Check update
 	if stmt.Update != nil {
 		tc.checkExpression(stmt.Update)
 	}
-	
+
 	// Check body
 	tc.checkStatement(stmt.Body)
 }
@@ -769,17 +802,17 @@ func (tc *TypeChecker) isAssignable(source, target Type) bool {
 	if source.Equals(target) {
 		return true
 	}
-	
+
 	// Undefined can be assigned to anything (for now)
 	if source.Equals(UndefinedType) {
 		return true
 	}
-	
+
 	// Numeric type compatibility
 	if IsNumericType(source) && IsNumericType(target) {
 		return true
 	}
-	
+
 	// Union type handling
 	if unionType, ok := target.(*UnionType); ok {
 		for _, t := range unionType.Types {
@@ -788,7 +821,7 @@ func (tc *TypeChecker) isAssignable(source, target Type) bool {
 			}
 		}
 	}
-	
+
 	return false
 }
 
@@ -826,7 +859,7 @@ func (tc *TypeChecker) SetStrictMode(strict bool) {
 func (tc *TypeChecker) inferParameterType(paramName string, body ast.Node) Type {
 	// This is a simple implementation that looks for numeric operations
 	// In a full implementation, this would be much more sophisticated
-	
+
 	switch node := body.(type) {
 	case *ast.BlockStatement:
 		for _, stmt := range node.Body {
@@ -837,7 +870,7 @@ func (tc *TypeChecker) inferParameterType(paramName string, body ast.Node) Type 
 	case ast.Expression:
 		return tc.inferParameterTypeFromExpression(paramName, node)
 	}
-	
+
 	return UndefinedType
 }
 
@@ -861,7 +894,7 @@ func (tc *TypeChecker) inferParameterTypeFromExpression(paramName string, expr a
 			return UndefinedType
 		}
 	}
-	
+
 	return UndefinedType
 }
 
@@ -884,6 +917,6 @@ func (tc *TypeChecker) expressionUsesParameter(expr ast.Expression, paramName st
 			}
 		}
 	}
-	
+
 	return false
 }

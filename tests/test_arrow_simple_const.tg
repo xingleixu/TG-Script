@@ -1,0 +1,16 @@
+// 简单的const箭头函数测试
+// Simple const arrow function test
+
+print("=== 简单const箭头函数测试 ===");
+
+// 基本const箭头函数
+const add = (a, b) => a + b;
+print("const add 函数定义成功");
+
+const square = x => x * x;
+print("const square 函数定义成功");
+
+const getAnswer = () => 42;
+print("const getAnswer 函数定义成功");
+
+print("=== 所有const箭头函数定义成功 ===");

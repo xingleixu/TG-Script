@@ -1,0 +1,22 @@
+// 测试箭头函数赋值给非const变量的错误情况
+// Test error cases: arrow functions assigned to non-const variables
+
+print("=== 箭头函数错误赋值测试 ===");
+
+// 错误用法1：箭头函数赋值给let变量（应该报错）
+print("1. 错误用法 - let变量:");
+let letArrowFunc = (x) => x * 2;
+
+// 错误用法2：箭头函数赋值给var变量（应该报错）
+print("2. 错误用法 - var变量:");
+var varArrowFunc = (a, b) => a + b;
+
+// 错误用法3：更复杂的箭头函数赋值给let变量（应该报错）
+print("3. 错误用法 - 复杂箭头函数:");
+let complexArrowFunc = (name, age) => "Name: " + name + ", Age: " + age;
+
+// 错误用法4：无参数箭头函数赋值给var变量（应该报错）
+print("4. 错误用法 - 无参数箭头函数:");
+var noParamArrowFunc = () => "Hello World";
+
+print("=== 如果看到这条消息，说明错误检查没有生效 ===");

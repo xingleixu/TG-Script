@@ -1,0 +1,12 @@
+// 箭头函数赋值规则最终测试
+
+// 正确用法：箭头函数赋值给const变量
+const validArrowFunc = (x) => x * 2;
+const validComplexFunc = (a, b) => a + b;
+const validNoParamFunc = () => "Hello";
+
+// 错误用法：箭头函数赋值给let变量（应该报错）
+let invalidLetFunc = (x) => x + 1;
+
+// 错误用法：箭头函数赋值给var变量（应该报错）
+var invalidVarFunc = (y) => y - 1;

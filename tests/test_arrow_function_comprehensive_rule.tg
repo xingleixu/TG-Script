@@ -1,0 +1,43 @@
+// 箭头函数const赋值规则综合测试
+// Comprehensive test for arrow function const assignment rule
+
+print("=== 箭头函数const赋值规则综合测试 ===");
+
+// ✅ 正确用法：箭头函数赋值给const变量
+print("✅ 正确用法:");
+
+const validAdd = (a, b) => a + b;
+const validSquare = x => x * x;
+const validGreet = name => "Hello, " + name;
+const validGetAnswer = () => 42;
+const validMultiply = (x, y) => {
+    return x * y;
+};
+
+print("所有const箭头函数定义成功");
+
+// 测试正确的函数
+let result1 = validAdd(10, 20);
+print("validAdd(10, 20) = " + result1);
+
+let result2 = validSquare(6);
+print("validSquare(6) = " + result2);
+
+let result3 = validGreet(123);
+print("validGreet(123) = " + result3);
+
+let result4 = validGetAnswer();
+print("validGetAnswer() = " + result4);
+
+let result5 = validMultiply(7, 8);
+print("validMultiply(7, 8) = " + result5);
+
+// ❌ 错误用法：箭头函数赋值给let变量（应该报错）
+print("❌ 错误用法 - let变量:");
+let invalidLetFunc = (x) => x * 2;
+
+// ❌ 错误用法：箭头函数赋值给var变量（应该报错）
+print("❌ 错误用法 - var变量:");
+var invalidVarFunc = (a, b) => a - b;
+
+print("=== 测试完成 ===");
