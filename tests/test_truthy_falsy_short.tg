@@ -1,0 +1,24 @@
+// 测试假值判定和逻辑运算符
+print("=== 假值测试 ===");
+print(null);           // null
+print(false);          // false  
+print(0);              // 0
+print("");             // 空字符串
+
+print("=== && 运算符测试 ===");
+print(null && "right");     // null (左操作数)
+print(false && "right");    // false (左操作数)
+print(0 && "right");        // 0 (左操作数)
+print("" && "right");       // "" (左操作数)
+print("left" && "right");   // "right" (右操作数)
+print(true && "right");     // "right" (右操作数)
+print(1 && "right");        // "right" (右操作数)
+
+print("=== || 运算符测试 ===");
+print(null || "right");     // "right" (右操作数)
+print(false || "right");    // "right" (右操作数)
+print(0 || "right");        // "right" (右操作数)
+print("" || "right");       // "right" (右操作数)
+print("left" || "right");   // "left" (左操作数)
+print(true || "right");     // true (左操作数)
+print(1 || "right");        // 1 (左操作数)

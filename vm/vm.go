@@ -254,7 +254,7 @@ func (vm *VM) executeInstruction() error {
 	closure := frame.Closure
 	
 	// Check bounds
-	if frame.PC >= len(closure.Function.Instructions) {
+	if frame.PC < 0 || frame.PC >= len(closure.Function.Instructions) {
 		vm.Running = false
 		return nil
 	}
@@ -599,8 +599,8 @@ func (vm *VM) opTest(inst Instruction) error {
 	a := inst.GetA()
 	va := vm.GetRegister(a)
 	
-	if !va.ToBool() {
-		vm.CurrentFrame.PC++ // skip next instruction
+	if va.ToBool() {
+		vm.CurrentFrame.PC++ // skip next instruction if condition is truthy
 	}
 	
 	return nil
@@ -818,9 +818,12 @@ func (vm *VM) opAnd(inst Instruction) error {
 	a, b, c := inst.GetA(), inst.GetB(), inst.GetC()
 	vb, vc := vm.GetRegister(b), vm.GetRegister(c)
 	
-	// Logical AND: result is true only if both operands are true
-	result := vb.ToBool() && vc.ToBool()
-	vm.SetRegister(a, NewBoolValue(result))
+	// JavaScript-style logical AND: if left is falsy, return left; otherwise return right
+	if !vb.ToBool() {
+		vm.SetRegister(a, vb)
+	} else {
+		vm.SetRegister(a, vc)
+	}
 	
 	return nil
 }
@@ -829,9 +832,12 @@ func (vm *VM) opOr(inst Instruction) error {
 	a, b, c := inst.GetA(), inst.GetB(), inst.GetC()
 	vb, vc := vm.GetRegister(b), vm.GetRegister(c)
 	
-	// Logical OR: result is true if either operand is true
-	result := vb.ToBool() || vc.ToBool()
-	vm.SetRegister(a, NewBoolValue(result))
+	// JavaScript-style logical OR: if left is truthy, return left; otherwise return right
+	if vb.ToBool() {
+		vm.SetRegister(a, vb)
+	} else {
+		vm.SetRegister(a, vc)
+	}
 	
 	return nil
 }

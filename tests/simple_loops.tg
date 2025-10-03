@@ -1,0 +1,15 @@
+// 简单循环测试
+
+print("for循环测试:");
+for (let i = 1; i <= 3; i = i + 1) {
+    print(i);
+}
+
+print("while循环测试:");
+let count = 0;
+while (count < 3) {
+    print(count);
+    count = count + 1;
+}
+
+print("测试完成");

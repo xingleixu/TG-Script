@@ -1,0 +1,25 @@
+// 简单的逻辑运算符测试
+print("=== 逻辑运算符测试 ===");
+
+// && 测试
+print("&& 测试:");
+print(null && "right");     // 应该输出: null
+print(0 && "right");        // 应该输出: 0
+print("left" && "right");   // 应该输出: right
+print(true && false);       // 应该输出: false
+
+// || 测试  
+print("|| 测试:");
+print(null || "right");     // 应该输出: right
+print(0 || "right");        // 应该输出: right
+print("left" || "right");   // 应该输出: left
+print(false || true);       // 应该输出: true
+
+// 布尔值测试
+print("布尔值测试:");
+print(true && true);        // 应该输出: true
+print(true && false);       // 应该输出: false
+print(false || false);      // 应该输出: false
+print(true || false);       // 应该输出: true
+
+print("测试完成");
